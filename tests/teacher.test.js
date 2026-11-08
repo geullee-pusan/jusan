@@ -23,12 +23,10 @@ test('대사 규칙: 한 문장은 짧게, 바뀌는 숫자를 넣지 않고, �
   }
 });
 
-test('목소리는 2가지 이상이고 높낮이·빠르기가 브라우저 범위 안이다', () => {
-  assert.ok(script.voices.length >= 2);
-  for (const v of script.voices) {
-    assert.ok(v.pitch >= 0 && v.pitch <= 2, v.name);
-    assert.ok(v.rate >= 0.1 && v.rate <= 10, v.name);
-  }
+test('목소리는 하나이고 높낮이·빠르기가 브라우저 범위 안이다', () => {
+  const v = script.voice;
+  assert.ok(v.pitch >= 0 && v.pitch <= 2);
+  assert.ok(v.rate >= 0.1 && v.rate <= 10);
 });
 
 test('같은 시드는 같은 대사를 고른다', () => {

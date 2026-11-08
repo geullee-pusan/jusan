@@ -1,22 +1,20 @@
 // 장면 재생기(docs/SPEC.md 7.3~7.5절). src/core/teacher.js가 만든 장면 목록을 차례로 보여 주고 읽는다.
-// 말할 때는 자막을 늘 보여 주고, 목소리는 1~5글자마다 바뀐다(voicechunks.js).
-import { splitVoiceChunks } from '../core/voicechunks.js';
+// 말할 때는 자막을 늘 보여 준다. 목소리는 하나로 일정하다(teacher.json의 voice).
 import { playEndSound } from './end-sound.js';
-import { speakChunks, wait } from './speech.js';
+import { speak as speakLine, wait } from './speech.js';
 
 /**
- * @param {{teacher: object, board: object, caption: HTMLElement, styles: object[],
+ * @param {{teacher: object, board: object, caption: HTMLElement, voice: object,
  *          waitDone: () => Promise<void>, getAnswer: () => Promise<number|null>}} ctx
  *   waitDone: 아이가 "다 했어요"를 할 때까지 기다린다. getAnswer: 아이의 답을 받는다(그만하면 null).
  */
 export function createPlayer(ctx) {
-  const { teacher, board, caption, styles } = ctx;
+  const { teacher, board, caption, voice } = ctx;
   let stopped = false;
 
-  async function speak(text, seed, pose) {
+  async function speak(text, pose) {
     caption.textContent = text;
     teacher.pose(pose ?? 'talk');
-    const chunks = splitVoiceChunks(text, seed, { voices: styles.length });
     let started = false;
     const begin = () => {
       if (started) return;
@@ -25,7 +23,7 @@ export function createPlayer(ctx) {
     };
     // 소리가 늦게 시작해도 입은 곧 움직인다.
     const early = setTimeout(begin, 300);
-    await speakChunks(chunks, styles, { onStart: begin });
+    await speakLine(text, voice, { onStart: begin });
     clearTimeout(early);
     teacher.talking(false);
   }
@@ -39,7 +37,7 @@ export function createPlayer(ctx) {
       if (stopped) break;
       switch (scene.kind) {
         case 'say':
-          await speak(scene.text, scene.seed, scene.pose);
+          await speak(scene.text, scene.pose);
           teacher.pose('idle');
           break;
         case 'number':
@@ -49,7 +47,7 @@ export function createPlayer(ctx) {
           } else if (scene.row !== null && scene.value !== null) {
             board.listening(scene.row + 1);
           }
-          await speak(scene.text, scene.seed, scene.pose);
+          await speak(scene.text, scene.pose);
           await wait(250); // 줄 사이 쉼(나중에 아이가 고르는 빠르기로 바꾼다)
           break;
         case 'clear':

@@ -92,9 +92,9 @@ function getAnswer() {
   });
 }
 
-const player = createPlayer({ teacher, board, caption, styles: script.voices, waitDone, getAnswer });
+const player = createPlayer({ teacher, board, caption, voice: script.voice, waitDone, getAnswer });
 
-/** 이번 시험의 시드. 누를 때마다 새로 정해 목소리 조각이 매번 다르게 나뉜다. */
+/** 이번 시험의 시드. 누를 때마다 새로 정해 문제와 대사가 바뀐다. */
 function newSeed() {
   const a = new Uint32Array(1);
   crypto.getRandomValues(a);

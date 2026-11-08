@@ -9,7 +9,6 @@
 //  - wait:    아이가 "다 했어요"를 할 때까지 기다린다.
 //  - nod:     고개를 끄덕인다.
 //  - fall:    수업 끝. 뒤로 쓰러지며 끝 소리가 난다.
-// seed는 목소리 조각 나누기(voicechunks.js)에 쓴다.
 import { createRng, seedFrom } from './rng.js';
 import { numberPieces, readNumber } from './numread.js';
 
