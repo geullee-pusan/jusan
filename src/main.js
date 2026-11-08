@@ -11,6 +11,7 @@ import { parseSpokenCommand, pickSpokenNumber } from './core/numhear.js';
 import { createAbacus } from './ui/abacus-view.js';
 import { createBoard } from './ui/board.js';
 import { prepareEndSound } from './ui/end-sound.js';
+import { registerServiceWorker } from './ui/install.js';
 import { listenOnce, listenSupported, stopListening } from './ui/listen.js';
 import { createPlayer } from './ui/player.js';
 import { setMuted, speechSupported, stopSpeaking, voicesReady } from './ui/speech.js';
@@ -240,3 +241,4 @@ window.addEventListener('pagehide', () => {
 });
 voicesReady();
 prepareEndSound();
+registerServiceWorker();
