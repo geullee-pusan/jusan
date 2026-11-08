@@ -1,45 +1,4 @@
 {
-  "_설명": "큐브 선생님 대사(docs/SPEC.md 7.3절). 줄마다 id가 있고, 줄 안에 바뀌는 값(숫자, 이름)을 넣지 않는다. 숫자는 numbers 장면이 따로 말한다. 지금 대사는 임시다. 부모가 구해 온 대화로 바꾼다.",
-  "voice": { "name": "어린이", "pitch": 1.6, "rate": 1.05, "_설명": "기기 음성을 높고 조금 빠르게 해서 어린이 목소리처럼 들리게 한다. 진짜 어린이 목소리는 AI 음성 파일로 바꿀 때 고른다." },
-  "words": {
-    "plus": "더하기",
-    "minus": "빼기",
-    "ask": "은?"
-  },
-  "lines": {
-    "greet": [
-      { "id": "greet-1", "text": "안녕하세요. 반가워요." },
-      { "id": "greet-2", "text": "안녕하세요. 주산 시간이에요." }
-    ],
-    "ready": [
-      { "id": "ready-1", "text": "주판을 준비해요." },
-      { "id": "ready-2", "text": "주판을 깨끗하게 털어요." }
-    ],
-    "listen-first": [
-      { "id": "listen-1", "text": "잘 듣고 주판에 놓아요." }
-    ],
-    "answer": [
-      { "id": "answer-1", "text": "답을 말해 줄래요?" },
-      { "id": "answer-2", "text": "답이 뭐예요?" }
-    ],
-    "correct": [
-      { "id": "correct-1", "text": "맞았어요." },
-      { "id": "correct-2", "text": "정확해요. 잘 놓았어요." },
-      { "id": "correct-3", "text": "맞아요. 손이 점점 빨라지네요." }
-    ],
-    "wrong": [
-      { "id": "wrong-1", "text": "아쉬워요. 같이 다시 볼까요?" },
-      { "id": "wrong-2", "text": "조금 달라요. 한 줄씩 다시 놓아 봐요." }
-    ],
-    "summary-pre": [
-      { "id": "summary-pre-1", "text": "오늘 맞힌 문제는" }
-    ],
-    "summary-post": [
-      { "id": "summary-post-1", "text": "문제예요." }
-    ],
-    "bye": [
-      { "id": "bye-1", "text": "오늘은 여기까지예요. 수고했어요." },
-      { "id": "bye-2", "text": "오늘 수업 끝. 다음에 또 만나요." }
-    ]
-  }
+  "_설명": "큐브 선생님 목소리(docs/SPEC.md 7.4절). 기기 음성을 높고 조금 빠르게 해서 어린이 목소리처럼 들리게 한다. 수업 대사는 src/content/lessons/에 있다.",
+  "voice": { "name": "어린이", "pitch": 1.6, "rate": 1.05 }
 }

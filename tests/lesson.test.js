@@ -81,6 +81,12 @@ test('수업 끝: 맞힌 수를 말하고 쓰러진다', () => {
   assert.ok(!texts(endScenes(script, 0, 1)).some((t) => t.includes('개를 맞혔어요')));
 });
 
+test('선생님 목소리는 하나이고 높낮이·빠르기가 브라우저 범위 안이다', () => {
+  const { voice } = JSON.parse(readFileSync(resolve(ROOT, 'src/content/teacher.json'), 'utf8'));
+  assert.ok(voice.pitch >= 0 && voice.pitch <= 2);
+  assert.ok(voice.rate >= 0.1 && voice.rate <= 10);
+});
+
 test('모든 대사 틀에 요란한 칭찬과 금지된 말이 없다', () => {
   for (const [key, list] of Object.entries(script.lines)) {
     for (const t of list) assert.ok(!/최고|천재|대박|점수/.test(t), `${key}: ${t}`);

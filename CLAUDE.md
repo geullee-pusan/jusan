@@ -9,6 +9,11 @@
 - 급수와 교육 순서에 관한 사실은 `docs/research-curriculum.md`에 출처와 함께 있다.
 - 빌드·PWA·배포 틀은 `C:\Subway game`(부산 도시철도 설계 게임)에서 가져온다. 그 프로젝트는 읽기만 하고 고치지 않는다.
 
+## 지금 목표
+- 1차 목표는 1강 "한 자리 곱셈"을 완성도 있게 돌리는 것이다(SPEC 0장). 다른 강을 더할 때도 이 틀(`lessons/` 대본 + `lesson.js` 장면)을 따른다.
+- 강의 대사는 그대로 옮기지 않는다. 받아 적은 강의(`assets/lesson-notes/`, git에 넣지 않음)에서 흐름과 방법만 가져와 새로 쓴다.
+- 개발 서버에서 `?fast`를 붙이고 소리를 끄면 수업을 빨리 돌려 볼 수 있다.
+
 ## 작업 방식
 - 한 세션에는 한 Phase만 진행한다.
 - 시작할 때 계획을 먼저 보여주고 확인을 받는다.
@@ -73,9 +78,9 @@
 
 ## 폴더
 - `docs/`: 기획(`SPEC.md`)과 조사(`research-curriculum.md`)
-- `src/core/`: 주판 모델, 기법 판별, 문제 만들기, 기술 지도, 문제 고르기, 오답 진단, 선생님 대사, 숫자 읽기, 시드 난수
+- `src/core/`: 주판 모델·덧셈 기법(`abacus.js`), 곱셈 단계(`multiply.js`), 곱셈 문제(`mulproblems.js`), 오답 짐작(`muldiagnose.js`), 수업 장면(`lesson.js`), 숫자 읽기(`numread.js`), 들은 말 → 숫자(`numhear.js`), 조사·자리 이름(`korean.js`), 시드 난수(`rng.js`)
 - `src/ui/`: 화면, 목소리(`speech.js`, 지하철 게임 `src/ui/ride-sound.js`에서 가져옴), 선생님 그림
-- `src/content/`: 기법, 크기 단계, 기술 지도 기준값, 예비 문제, 선생님 대사, 낱말 카드 JSON. 초안 값은 여기서 고친다
+- `src/content/`: 선생님 모습(`teacher-look.json`)과 목소리(`teacher.json`), 강마다 수업 대본(`lessons/`), 끝 소리(`end-sound.m4a`)
 - `media/`: 대사·숫자 조각 음성, 끝 소리, `manifest.json`. 스크립트가 만든다
 - `assets/`: 원본 사진(아이 사진 `son-photo.jpg`, 선생님 후보 사진). 아이 사진은 git과 배포물에 넣지 않는다
 - `scripts/`: 아이콘, 음성 제작 스크립트

@@ -73,7 +73,9 @@ export function stopSpeaking() {
  */
 export function speak(text, style, { onStart } = {}) {
   // 소리가 안 나도 수업이 이어지게, 글자 수로 말하는 시간을 어림한다(한 글자 0.22초).
-  const guessMs = 600 + [...text].length * 220;
+  // 개발 서버에서 ?fast를 붙이면 소리 끈 수업을 빨리 돌려 볼 수 있다(빌드에는 들어가지 않는다).
+  const fast = import.meta.env?.DEV && new URLSearchParams(location.search).has('fast') ? 8 : 1;
+  const guessMs = (600 + [...text].length * 220) / fast;
   if (muted || !speechSupported() || !text) {
     onStart?.();
     return wait(guessMs);
