@@ -72,8 +72,8 @@ export function createPlayer(ctx) {
           break;
         case 'fall':
           caption.textContent = '';
+          playEndSound(); // 쓰러지기 시작하는 순간에 소리가 난다
           await teacher.fall();
-          playEndSound();
           await wait(500);
           break;
         default:

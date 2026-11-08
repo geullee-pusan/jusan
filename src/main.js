@@ -6,6 +6,7 @@ import look from './content/teacher-look.json';
 import script from './content/teacher.json';
 import { answerScenes, endScenes, greetScenes, problemScenes, sumRows } from './core/teacher.js';
 import { createBoard } from './ui/board.js';
+import { prepareEndSound } from './ui/end-sound.js';
 import { createPlayer } from './ui/player.js';
 import { setMuted, speechSupported, stopSpeaking, voicesReady } from './ui/speech.js';
 import { createTeacher } from './ui/teacher-view.js';
@@ -156,3 +157,4 @@ document.querySelector('.controls').addEventListener('click', (e) => {
 
 window.addEventListener('pagehide', stopSpeaking);
 voicesReady();
+prepareEndSound();
