@@ -1,0 +1,18 @@
+{
+  "name": "JUSAN",
+  "short_name": "JUSAN",
+  "description": "화면 속 큐브 선생님과 하는 주산 연습",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "id": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F6F1E6",
+  "theme_color": "#0D69AC",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

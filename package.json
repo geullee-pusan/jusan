@@ -1,0 +1,22 @@
+{
+  "name": "jusan",
+  "version": "0.0.0",
+  "private": true,
+  "description": "JUSAN: 화면 속 큐브 선생님과 하는 주산 연습",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/check-dist.mjs",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "preview": "vite preview --port 4173 --strictPort",
+    "tablet": "vite preview --port 4173 --strictPort --host",
+    "icons": "node scripts/make-icons.mjs"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "devDependencies": {
+    "vite": "8.3.0",
+    "vite-plugin-singlefile": "2.3.3"
+  }
+}

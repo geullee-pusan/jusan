@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>큐브 선생님 미리보기</title>
+<!--
+  JUSAN 큐브 선생님 미리보기(시험용). 아이가 정한 크기 그대로 그린다(docs/SPEC.md 7.5절).
+  몸통 19×19×6(두께를 얇게 고침), 얼굴 10×20×10(세로를 2배로), 팔 7.5×19×3(몸통 키와 같은 길이, 가로 두께는 처음의 2.5배), 다리 9.5×16.15×6 두 개(가로 합 = 몸통 가로, 세로 = 몸통 키의 85%), 눈 1×4×1, 코 없음, 웃는 입(3×2×1 + 입꼬리 1×2×1 두 개).
+  끝 소리는 임시로 만든 소리다(아이가 녹음한 것으로 바꿀 것).
+  라이브러리 없이 CSS 3D로 그린다. 이 파일만 브라우저로 열면 된다.
+-->
+<style>
+  :root {
+    --u: 7px; /* 블록 한 칸 */
+    --bg: #F6F1E6; --ink: #2B2A28; --board: #2F4A3F;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 18px/1.5 system-ui, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.note { margin: 0 0 12px; font-size: 15px; opacity: .75; }
+  .stage {
+    position: relative; height: 460px; border-radius: 16px; overflow: hidden;
+    background: linear-gradient(#EFE7D6, #E3D7BF); perspective: 1100px; touch-action: none; cursor: grab;
+  }
+  .caption {
+    position: absolute; left: 16px; right: 16px; bottom: 12px; min-height: 30px;
+    background: rgba(0,0,0,.6); color: #fff; border-radius: 10px; padding: 6px 12px; font-size: 18px;
+  }
+  .caption:empty { display: none; }
+  .scene { position: absolute; left: 50%; top: 92%; transform-style: preserve-3d; }
+  .rig, .part { position: absolute; transform-style: preserve-3d; }
+  .box { position: absolute; transform-style: preserve-3d; }
+  .face { position: absolute; left: 0; top: 0; backface-visibility: hidden; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  button {
+    min-height: 48px; padding: 0 18px; border-radius: 12px; border: 2px solid #2B2A28;
+    background: #fff; font: inherit; cursor: pointer;
+  }
+  button:active { transform: translateY(1px); }
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 10px; font-size: 15px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>큐브 선생님 미리보기</h1>
+  <p class="note">아이가 정한 크기 그대로예요. 끝 소리는 임시예요. 화면을 끌면 돌아가요.</p>
+  <div class="stage" id="stage">
+    <div class="scene" id="scene"><div class="rig" id="rig"></div></div>
+    <div class="caption" id="caption"></div>
+  </div>
+  <div class="controls">
+    <button data-act="talk">말하기</button>
+    <button data-act="point">칠판 가리키기</button>
+    <button data-act="listen">듣기</button>
+    <button data-act="nod">끄덕이기</button>
+    <button data-act="blink">눈 깜빡</button>
+    <button data-act="end">수업 끝</button>
+    <button data-act="reset">다시 세우기</button>
+  </div>
+  <div class="row"><label><input type="checkbox" id="spin" checked> 천천히 돌기</label></div>
+</main>
+<script>
+// 선생님 색(아이가 정함). 머리가 긴 모양과 함께 쓴다(docs/SPEC.md 7.5절).
+const LOOK = { body: '#0D69AC', head: '#F5CD30', arm: '#F5CD30', leg: '#A4BD47', eye: '#1B1B1B', mouth: '#1B1B1B' };
+const U = 6;
+
+/** 상자 하나. 크기와 가운데 자리는 블록 칸 단위. y는 위쪽이 +. */
+function box(parent, [w, h, d], [x, y, z], role) {
+  const color = LOOK[role];
+  const el = document.createElement('div');
+  el.className = 'box';
+  el.dataset.role = role;
+  el.style.width = `${w * U}px`; el.style.height = `${h * U}px`;
+  el.style.left = `${-w * U / 2}px`; el.style.top = `${-h * U / 2}px`;
+  el.style.transform = `translate3d(${x * U}px, ${-y * U}px, ${z * U}px)`;
+  const faces = [
+    [w, h, `translateZ(${d * U / 2}px)`, 1],                         // 앞
+    [w, h, `rotateY(180deg) translateZ(${d * U / 2}px)`, .7],          // 뒤
+    [d, h, `rotateY(90deg) translateZ(${w * U / 2}px)`, .82],          // 오른쪽
+    [d, h, `rotateY(-90deg) translateZ(${w * U / 2}px)`, .82],         // 왼쪽
+    [w, d, `rotateX(90deg) translateZ(${h * U / 2}px)`, 1.12],         // 위
+    [w, d, `rotateX(-90deg) translateZ(${h * U / 2}px)`, .6],          // 아래
+  ];
+  for (const [fw, fh, t, light] of faces) {
+    const f = document.createElement('div');
+    f.className = 'face';
+    f.style.width = `${fw * U}px`; f.style.height = `${fh * U}px`;
+    f.style.left = `${(w - fw) * U / 2}px`; f.style.top = `${(h - fh) * U / 2}px`;
+    f.style.transform = t;
+    f.style.background = color;
+    f.style.filter = `brightness(${light})`;
+    f.style.outline = '1px solid rgba(0,0,0,.08)';
+    el.appendChild(f);
+  }
+  parent.appendChild(el);
+  return el;
+}
+
+/** 돌릴 수 있는 묶음. pivot은 돌 때 기준점(블록 칸). */
+function part(parent, [px, py, pz]) {
+  const el = document.createElement('div');
+  el.className = 'part';
+  el.style.transform = `translate3d(${px * U}px, ${-py * U}px, ${pz * U}px)`;
+  const inner = document.createElement('div');
+  inner.className = 'part';
+  inner.style.transition = 'transform .35s ease';
+  el.appendChild(inner);
+  parent.appendChild(el);
+  return inner; // 안쪽 묶음에 회전을 준다. 안의 상자는 기준점에서 떨어진 자리로 놓는다.
+}
+
+const rig = document.getElementById('rig');
+// 기준: 발바닥 가운데가 (0,0,0). 다리 3, 몸통 19, 얼굴 10.
+// 다리: 두 다리 가로 합 = 몸통 가로(19), 세로 = 몸통 키의 85%, 두께 = 몸통 두께
+const LEG_W = 19 / 2, LEG_H = 19 * 0.85;
+const LEG_TOP = LEG_H, BODY_TOP = LEG_TOP + 19, HEAD_H = 20, HEAD_TOP = BODY_TOP + HEAD_H; // 머리 세로는 처음 10칸의 2배
+const BODY_D = 6; // 몸통 두께(앞뒤). 처음 설계는 19였는데, 다른 부위와 비슷하게 얇게 했다.
+
+// 다리(몸통 아래, 안쪽으로 조금 들여서)
+box(rig, [LEG_W, LEG_H, BODY_D], [-LEG_W / 2, LEG_H / 2, 0], 'leg');
+box(rig, [LEG_W, LEG_H, BODY_D], [LEG_W / 2, LEG_H / 2, 0], 'leg');
+// 몸통
+box(rig, [19, 19, BODY_D], [0, LEG_TOP + 9.5, 0], 'body');
+// 팔(몸통 양옆). 길이는 몸통 키와 같은 19칸. 어깨(몸통 위 끝)를 기준으로 돈다.
+const ARM_W = 3 * 2.5; // 팔 가로 두께(처음 3칸의 2.5배)
+const armL = part(rig, [-(9.5 + ARM_W / 2), BODY_TOP, 0]);
+box(armL, [ARM_W, 19, 3], [0, -9.5, 0], 'arm');
+const armR = part(rig, [9.5 + ARM_W / 2, BODY_TOP, 0]);
+box(armR, [ARM_W, 19, 3], [0, -9.5, 0], 'arm');
+// 머리: 목(몸통 위 가운데)을 기준으로 돈다.
+const head = part(rig, [0, BODY_TOP, 0]);
+box(head, [10, HEAD_H, 10], [0, HEAD_H / 2, 0], 'head');
+// 얼굴(눈·입)은 머리 가운데쯤에 모아 둔다.
+const FACE = HEAD_H / 2 + 8; // 눈 위 끝. 눈(4칸) + 빈칸 8칸 + 입(4칸) = 16칸을 머리 가운데에 둔다
+// 눈: 앞면에서 한 칸 나온다. 왼쪽부터 3째, 8째 칸, 위에서 4째 줄.
+const eyeL = box(head, [1, 4, 1], [-2.5, FACE - 2, 5.5], 'eye');
+const eyeR = box(head, [1, 4, 1], [2.5, FACE - 2, 5.5], 'eye');
+// 코는 없다.
+// 웃는 입: 가운데 3칸 막대(위에서 8째 줄) + 양 끝 한 칸씩 위로 올라간 입꼬리
+const mouth = box(head, [3, 2, 1], [0, FACE - 15, 5.5], 'mouth');
+box(head, [1, 2, 1], [-2, FACE - 13, 5.5], 'mouth');
+box(head, [1, 2, 1], [2, FACE - 13, 5.5], 'mouth');
+for (const el of [eyeL, eyeR, mouth]) el.style.transition = 'transform .08s';
+const base = (el) => el.style.transform;
+const eyeBase = [base(eyeL), base(eyeR)], mouthBase = base(mouth);
+
+// 장면 돌리기
+const scene = document.getElementById('scene');
+let yaw = -28, pitch = -10, spin = true, falling = false;
+function draw() {
+  scene.style.transform = `translate3d(0, 0, 0) rotateX(${pitch}deg) rotateY(${yaw}deg)`;
+}
+const stage = document.getElementById('stage');
+let drag = null;
+stage.addEventListener('pointerdown', (e) => { drag = [e.clientX, e.clientY, yaw, pitch]; stage.setPointerCapture(e.pointerId); });
+stage.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  yaw = drag[2] + (e.clientX - drag[0]) * .4;
+  pitch = Math.max(-40, Math.min(25, drag[3] - (e.clientY - drag[1]) * .3));
+  draw();
+});
+stage.addEventListener('pointerup', () => { drag = null; });
+document.getElementById('spin').addEventListener('change', (e) => { spin = e.target.checked; });
+let last = performance.now(), t = 0;
+function tick(now) {
+  const dt = (now - last) / 1000; last = now; t += dt;
+  if (spin && !drag) yaw += dt * 12;
+  if (!falling) rig.style.transform = `translateY(${Math.sin(t * 2) * 1.5}px)`; // 숨쉬기
+  draw();
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// 동작
+const caption = document.getElementById('caption');
+let talkTimer = null;
+function mouthOpen(open) {
+  mouth.style.transform = mouthBase + (open ? ` translateY(${U}px) scaleY(2)` : '');
+}
+function say(text, done) {
+  caption.textContent = text;
+  clearInterval(talkTimer);
+  let k = 0;
+  talkTimer = setInterval(() => mouthOpen(++k % 2 === 1), 140); // 입 블록 1칸 ↔ 2칸
+  const stop = () => { clearInterval(talkTimer); mouthOpen(false); done && done(); };
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR'; u.rate = 1;
+    u.onend = stop; u.onerror = stop;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    setTimeout(stop, 600 + text.length * 120); // 목소리가 없는 기기
+  } catch { setTimeout(stop, 600 + text.length * 120); }
+}
+function blink() {
+  for (const [el, b] of [[eyeL, eyeBase[0]], [eyeR, eyeBase[1]]]) {
+    el.style.transform = b + ' scaleY(.2)';
+    setTimeout(() => { el.style.transform = b; }, 140);
+  }
+}
+setInterval(() => { if (!falling) blink(); }, 3800);
+
+/** 임시 끝 소리: 짧게 떨어지는 "웁". 아이가 녹음한 소리로 바꿀 것. */
+function endSound() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), f = ac.createBiquadFilter(), g = ac.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(420, ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(150, ac.currentTime + .28);
+    f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 1.2;
+    g.gain.setValueAtTime(.0001, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.5, ac.currentTime + .02);
+    g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .32);
+    o.connect(f).connect(g).connect(ac.destination);
+    o.start(); o.stop(ac.currentTime + .35);
+  } catch {}
+}
+
+const actions = {
+  talk: () => say('안녕하세요. 오늘은 10의 짝 덧셈을 해 볼 거예요. 주판을 준비해요.'),
+  point: () => {
+    armR.style.transform = 'rotateZ(-100deg)'; // 옆으로 들어 칠판 가리키기
+    say('삼십이, 더하기 십오, 빼기 칠은?', () => { armR.style.transform = ''; });
+  },
+  listen: () => {
+    head.style.transform = 'rotateZ(14deg)';
+    caption.textContent = '🎤 듣고 있어요…';
+    setTimeout(() => { head.style.transform = ''; caption.textContent = ''; }, 2200);
+  },
+  nod: () => {
+    head.style.transform = 'rotateX(-18deg)';
+    setTimeout(() => { head.style.transform = ''; }, 300);
+    setTimeout(() => { head.style.transform = 'rotateX(-18deg)'; }, 600);
+    setTimeout(() => { head.style.transform = ''; }, 900);
+  },
+  blink,
+  end: () => {
+    say('오늘은 여기까지예요. 수고했어요.', () => {
+      falling = true;
+      rig.style.transition = 'transform .6s cubic-bezier(.5,0,.9,.6)';
+      rig.style.transform = `translateZ(${-10 * U}px) rotateX(90deg)`; // 뒤로 벌러덩
+      setTimeout(endSound, 350);
+    });
+  },
+  reset: () => {
+    rig.style.transition = 'transform .4s ease';
+    rig.style.transform = '';
+    setTimeout(() => { rig.style.transition = ''; falling = false; }, 420);
+    caption.textContent = '';
+  },
+};
+document.querySelectorAll('button[data-act]').forEach((b) => b.addEventListener('click', () => actions[b.dataset.act]()));
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+
+# 아이 사진은 저장소에 올리지 않는다(아이콘 그림만 올린다)
+assets/son-photo.jpg
+
+# 외부 서비스 열쇠
+.*-key

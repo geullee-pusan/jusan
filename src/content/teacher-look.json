@@ -1,0 +1,21 @@
+{
+  "_설명": "큐브 선생님 모습(docs/SPEC.md 7.5절). 크기는 블록 칸 단위(가로×세로×깊이). 아이가 정한 것이니 마음대로 바꾸지 않는다.",
+  "body": [19, 19, 6],
+  "head": [10, 20, 10],
+  "arm": [7.5, 19, 3],
+  "leg": [9.5, 16.15, 6],
+  "eye": [1, 4, 1],
+  "eyeX": 2.5,
+  "mouthBar": [3, 2, 1],
+  "mouthCorner": [1, 2, 1],
+  "mouthCornerX": 2,
+  "eyeMouthGap": 8,
+  "colors": {
+    "body": "#0D69AC",
+    "head": "#F5CD30",
+    "arm": "#F5CD30",
+    "leg": "#A4BD47",
+    "eye": "#1B1B1B",
+    "mouth": "#1B1B1B"
+  }
+}
