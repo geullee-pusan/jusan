@@ -6,3 +6,6 @@ assets/son-photo.jpg
 
 # 외부 서비스 열쇠
 .*-key
+
+# 받아 적은 강의 내용(참고용). 저장소에 올리지 않는다.
+assets/lesson-notes/

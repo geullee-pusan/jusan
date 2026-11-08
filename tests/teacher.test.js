@@ -18,7 +18,7 @@ test('대사 id는 겹치지 않는다', () => {
 test('대사 규칙: 한 문장은 짧게, 바뀌는 숫자를 넣지 않고, 요란한 칭찬을 하지 않는다', () => {
   for (const { id, text } of allLines) {
     for (const sentence of text.split(/(?<=[.?!])\s+/)) assert.ok([...sentence].length <= 30, `${id}: ${sentence}`);
-    assert.ok(!/\d/.test(text) || /10의 짝|5의 짝/.test(text), `${id}에 숫자가 있어요: ${text}`);
+    assert.ok(!/\d/.test(text) || /친구수|5의 짝/.test(text), `${id}에 숫자가 있어요: ${text}`);
     assert.ok(!/최고|천재|대박/.test(text), `${id}: ${text}`);
   }
 });
