@@ -69,7 +69,8 @@ function waitDone() {
 function getAnswer() {
   answerBox.hidden = false;
   let typed = '';
-  const show = () => (answerShow.textContent = typed || ' ');
+  // 주판 자리점처럼 세 자리마다 콤마를 찍어 보여 준다(3752 → 3,752).
+  const show = () => (answerShow.textContent = typed ? Number(typed).toLocaleString('ko-KR') : ' ');
   show();
   keys.innerHTML = '';
   return new Promise((resolve) => {
