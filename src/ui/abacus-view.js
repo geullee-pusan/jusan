@@ -7,6 +7,20 @@ const BEAD_H = 26; // 알 높이(px)
 const UPPER_ROOM = BEAD_H * 2 + 8; // 위 칸 높이
 const LOWER_ROOM = BEAD_H * 5 + 8; // 아래 칸 높이
 
+/**
+ * 아이의 실물 주판 색(2026-11-09 부모 확인): 23줄, 왼쪽부터 빨·파·흰·노·주·초가 되풀이된다.
+ * 가장자리 틀은 검정, 윗알 아래 가름대는 흰색이다(style.css).
+ * 화면 주판도 같은 색으로 칠해 실물과 나란히 보며 따라 놓기 쉽게 한다.
+ * 실물의 오른쪽 끝 줄을 일의 자리로 본다(TODO(확인 필요): 아이가 일의 자리로 쓰는 줄).
+ */
+const REAL_COLORS = ['#e53935', '#1e66d0', '#f7f5ef', '#f7c631', '#f28c28', '#3aa655'];
+const REAL_RODS = 23;
+const ONES_FROM_LEFT = REAL_RODS - 1;
+export function rodColor(place) {
+  const fromLeft = ONES_FROM_LEFT - place;
+  return REAL_COLORS[((fromLeft % 6) + 6) % 6];
+}
+
 export function createAbacus(root) {
   root.classList.add('abacus');
   const frame = document.createElement('div');
@@ -29,6 +43,7 @@ export function createAbacus(root) {
       const place = count - 1 - i;
       const col = document.createElement('div');
       col.className = 'abacus-col';
+      col.style.setProperty('--bead', rodColor(place));
       const rod = document.createElement('div');
       rod.className = 'abacus-rod';
       const upper = document.createElement('div');
