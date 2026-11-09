@@ -482,12 +482,12 @@ export function createDefense(root, io) {
   }
 
   function renderMusicButton() {
-    root.querySelector('[data-d=music]').textContent = data.defenseMusic ? '🎵 켬' : '🎵 끔';
+    root.querySelector('[data-d=music]').textContent = data.musicOff ? '🎵 끔' : '🎵 켬';
   }
 
   /** 지금 상태에 맞게 음악을 켜거나 끈다. 곡이 바뀌면 줄였다가 바꾼다 */
   function musicUpdate() {
-    const want = Boolean(data.defenseMusic && game && !game.over && !game.paused && !isSfxMuted() && MUSIC_TRACKS.length);
+    const want = Boolean(!data.musicOff && game && !game.over && !game.paused && !isSfxMuted() && MUSIC_TRACKS.length);
     if (!want) {
       bgm.pause();
       return;
@@ -586,9 +586,9 @@ export function createDefense(root, io) {
     if (act === 'start' || act === 'again') start();
     if (act === 'pause') setPaused(!game?.paused);
     if (act === 'music') {
-      data.defenseMusic = !data.defenseMusic;
+      data.musicOff = !data.musicOff;
       const saved = io.load();
-      saved.defenseMusic = data.defenseMusic;
+      saved.musicOff = data.musicOff;
       io.save(saved);
       renderMusicButton();
       musicUpdate();
