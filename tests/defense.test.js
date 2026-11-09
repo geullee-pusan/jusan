@@ -6,8 +6,8 @@ import { SKILLS } from '../src/core/skills.js';
 
 const ORDER = Object.keys(ENEMIES);
 
-test('몬스터는 15종이고, 뒤로 갈수록 점수가 크며, 모두 문제를 만들 수 있다', () => {
-  assert.equal(ORDER.length, 15);
+test('몬스터는 17종이고, 뒤로 갈수록 점수가 크며, 모두 문제를 만들 수 있다', () => {
+  assert.equal(ORDER.length, 17);
   for (let i = 1; i < ORDER.length; i++) assert.ok(ENEMIES[ORDER[i]].points > ENEMIES[ORDER[i - 1]].points, ORDER[i]);
   const islands = new Set(SKILLS.map((s) => s.island));
   for (const [type, e] of Object.entries(ENEMIES)) {
@@ -33,9 +33,9 @@ test('레벨이 오르면 몬스터가 서서히 바뀌고(하나 빠지고 하�
     assert.ok(ORDER.indexOf(now.at(-1)) >= ORDER.indexOf(before.at(-1)));
     assert.ok(levelInfo(lv).travel < levelInfo(lv - 1).travel, `레벨 ${lv}가 더 빠르다`);
   }
-  // 15종이 모두 어느 레벨에선가 나온다
+  // 17종이 모두 어느 레벨에선가 나온다
   const seen = new Set(LEVELS.flatMap((_, i) => typesAt(i + 1)));
-  assert.equal(seen.size, 15);
+  assert.equal(seen.size, 17);
   // 레벨표를 넘으면 조금씩 더 빨라지되 너무 빨라지지 않는다
   assert.ok(levelInfo(LEVELS.length + 1).travel < levelInfo(LEVELS.length).travel);
   assert.equal(levelInfo(100).travel, MIN_TRAVEL);

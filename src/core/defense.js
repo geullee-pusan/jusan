@@ -10,7 +10,7 @@ import { makeMulProblem } from './mulproblems.js';
 import { createRng, randInt, seedFrom } from './rng.js';
 
 /**
- * 몬스터 15종. 지도의 섬 차례(바로 넣기 → 친구수 → 5의 짝 → 함께 → 이어서 올리기 → 두 자리 → 곱셈)대로
+ * 몬스터 17종. 지도의 섬 차례(바로 넣기 → 친구수 → 5의 짝 → 함께 → 이어서 올리기 → 두 자리 → 곱셈)대로
  * 뒤로 갈수록 문제가 어렵고 점수가 크다. island: 무찌른 문제를 기술 지도에 넣을 때 쓰는 섬.
  */
 const D1 = ['A1', 'A2', 'B1', 'B2'];
@@ -20,6 +20,7 @@ export const ENEMIES = {
   bat: { name: '박쥐', points: 12, island: 'add-1', make: as(4, [1, 1], 1, [], D1) },
   mushroom: { name: '버섯', points: 15, island: 'add-2', make: as(3, [1, 1], 0, ['A4'], [...D1, 'A4']) },
   spider: { name: '거미', points: 20, island: 'add-3', make: as(3, [1, 1], 1, ['B4'], [...D1, 'A4', 'B4']) },
+  raven: { name: '큰까마귀', points: 22, island: 'add-3', make: as(4, [1, 1], 1, ['B4'], [...D1, 'A4', 'B4']) },
   zombie: { name: '좀비', points: 25, island: 'add-4', make: as(3, [1, 1], 1, ['A3', 'B3'], [...D1, 'A3', 'A4', 'B3', 'B4']) },
   skeleton: { name: '해골', points: 30, island: 'add-4', make: as(4, [1, 1], 1, ['A3', 'B3'], [...D1, 'A3', 'A4', 'B3', 'B4']) },
   ghost: { name: '유령', points: 35, island: 'add-5', make: as(4, [1, 1], 1, ['A5', 'B5'], [...D1, 'A3', 'A4', 'A5', 'B3', 'B4', 'B5']) },
@@ -29,6 +30,7 @@ export const ENEMIES = {
   witch: { name: '마녀', points: 55, island: 'mul-1digit', make: (s) => makeMulProblem(s, { multiDigits: 2, singleFirst: createRng(s)() < 0.5, need: { carry: false } }) },
   dragon: { name: '드래곤', points: 60, island: 'mul-1digit', make: (s) => makeMulProblem(s, { multiDigits: 2, singleFirst: createRng(s)() < 0.5 }) },
   giant: { name: '거인', points: 70, island: 'add-6', make: as(5, [2, 3], 2, [], null) },
+  gargoyle: { name: '가고일', points: 75, island: 'mul-1digit', make: (s) => makeMulProblem(s, { multiDigits: 2, singleFirst: createRng(s)() < 0.5, need: { carry: true } }) },
   lava: { name: '용암 골렘', points: 80, island: 'mul-1digit', make: (s) => makeMulProblem(s, { multiDigits: 3, singleFirst: createRng(s)() < 0.5 }) },
   boss: { name: '마왕', points: 100, island: 'add-6', make: as(5, [2, 3], 2, ['A5', 'A6', 'B5', 'B6'], null) },
 };
@@ -42,18 +44,20 @@ export const LEVELS = [
   { mix: { slime: 3, bat: 1 }, travel: 45 },
   { mix: { slime: 1, bat: 2, mushroom: 1 }, travel: 43 },
   { mix: { bat: 1, mushroom: 2, spider: 1 }, travel: 41 },
-  { mix: { mushroom: 1, spider: 2, zombie: 1 }, travel: 39 },
-  { mix: { spider: 1, zombie: 2, skeleton: 1 }, travel: 37 },
-  { mix: { zombie: 1, skeleton: 2, ghost: 1 }, travel: 35 },
-  { mix: { skeleton: 1, ghost: 2, goblin: 1 }, travel: 33 },
-  { mix: { ghost: 1, goblin: 2, golem: 1 }, travel: 31 },
-  { mix: { goblin: 1, golem: 2, knight: 1 }, travel: 30 },
-  { mix: { golem: 1, knight: 2, witch: 1 }, travel: 29 },
-  { mix: { knight: 1, witch: 2, dragon: 1 }, travel: 28 },
-  { mix: { witch: 1, dragon: 2, giant: 1 }, travel: 27 },
-  { mix: { dragon: 1, giant: 2, lava: 1 }, travel: 26 },
-  { mix: { giant: 1, lava: 2, boss: 1 }, travel: 25 },
-  { mix: { lava: 1, boss: 2 }, travel: 24 },
+  { mix: { mushroom: 1, spider: 2, raven: 1 }, travel: 39 },
+  { mix: { spider: 1, raven: 2, zombie: 1 }, travel: 37 },
+  { mix: { raven: 1, zombie: 2, skeleton: 1 }, travel: 35 },
+  { mix: { zombie: 1, skeleton: 2, ghost: 1 }, travel: 33 },
+  { mix: { skeleton: 1, ghost: 2, goblin: 1 }, travel: 31 },
+  { mix: { ghost: 1, goblin: 2, golem: 1 }, travel: 30 },
+  { mix: { goblin: 1, golem: 2, knight: 1 }, travel: 29 },
+  { mix: { golem: 1, knight: 2, witch: 1 }, travel: 28 },
+  { mix: { knight: 1, witch: 2, dragon: 1 }, travel: 27 },
+  { mix: { witch: 1, dragon: 2, giant: 1 }, travel: 26 },
+  { mix: { dragon: 1, giant: 2, gargoyle: 1 }, travel: 25 },
+  { mix: { giant: 1, gargoyle: 2, lava: 1 }, travel: 24 },
+  { mix: { gargoyle: 1, lava: 2, boss: 1 }, travel: 23 },
+  { mix: { lava: 1, boss: 2 }, travel: 22 },
 ];
 /** 레벨 하나에 무찌를 몬스터 수 */
 export const PER_LEVEL = 10;

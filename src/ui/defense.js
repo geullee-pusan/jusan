@@ -46,9 +46,13 @@ const COVERS = {
 // 성 그림(없으면 회색 블록 성)
 const CASTLE = Object.values(import.meta.glob('../content/backgrounds/castle.webp', { eager: true, import: 'default' }))[0];
 /** 화면에 그리는 너비(px). 셀수록 크다 */
-const ART_WIDTH = { slime: 76, bat: 96, mushroom: 70, spider: 90, zombie: 66, skeleton: 66, ghost: 74, goblin: 70, golem: 100, knight: 80, witch: 80, dragon: 124, giant: 100, lava: 104, boss: 116 };
+const ART_WIDTH = { slime: 76, bat: 96, mushroom: 70, spider: 90, zombie: 66, skeleton: 66, ghost: 74, goblin: 70, golem: 100, knight: 80, witch: 80, dragon: 124, giant: 100, lava: 104, boss: 116, raven: 98, gargoyle: 104 };
+/** 고유 동작을 하는 때(길의 몇 %). 몬스터 번호로 고른다. 한 마리가 두 번 한다 */
+const ACT_AT = [[0.22, 0.6], [0.34, 0.72], [0.28, 0.52]];
+/** 고유 동작에 붙는 효과 */
+const ACT_FX = { gargoyle: 'dust', mushroom: 'spores', golem: 'dust', giant: 'dust', knight: 'dust', dragon: 'fire', lava: 'embers', boss: 'aura', witch: 'sparks', ghost: 'aura-blue', slime: 'drops' };
 /** 날거나 떠 있는 몬스터(땅 그림자를 작게, 위아래로 떠다님) */
-const FLYING = new Set(['bat', 'ghost', 'witch']);
+const FLYING = new Set(['bat', 'ghost', 'witch', 'raven', 'gargoyle']);
 const monHTML = (type) => {
   const src = ART[`../content/monsters/${type}.webp`];
   if (!src) return `<div class="mon ${type}"><i></i></div>`;
@@ -133,6 +137,7 @@ export function createDefense(root, io) {
   const field = $('#def-field');
   if (CASTLE) {
     $('#def-castle').classList.add('art');
+    $('#def-castle').style.setProperty('--castle-mask', `url(${CASTLE})`); // 성 모양대로 색을 입힌다
     $('#def-castle').innerHTML = `<img src="${CASTLE}" alt="" draggable="false">`;
     field.classList.add('castle-art');
   }
@@ -195,6 +200,7 @@ export function createDefense(root, io) {
       defeated: [],
       gone: new Set(),
       els: new Map(),
+      acted: new Map(), // 몬스터마다 고유 동작을 몇 번 했는지
       over: false,
     };
     for (const lane of root.querySelectorAll('.def-lane')) lane.innerHTML = '';
@@ -241,7 +247,19 @@ export function createDefense(root, io) {
       game.els.set(e.id, el);
     }
     const alive = game.enemies.filter((e) => !game.gone.has(e.id));
-    for (const e of alive) game.els.get(e.id).style.left = `${(1 - positionAt(e, game.t)) * 100}%`;
+    for (const e of alive) {
+      const el = game.els.get(e.id);
+      const pos = positionAt(e, game.t);
+      el.style.left = `${(1 - pos) * 100}%`;
+      el.style.setProperty('--p', pos.toFixed(3)); // 성에 다가올수록 커지고 앞으로 나온다(CSS)
+      // 고유 동작: 길의 정해진 두 곳에서 한 번씩. 보기만 바뀌고 위치와 빠르기는 그대로다(난이도 그대로)
+      const at = ACT_AT[e.id % ACT_AT.length];
+      const done = game.acted.get(e.id) ?? 0;
+      if (done < at.length && pos >= at[done]) {
+        game.acted.set(e.id, done + 1);
+        act(el, e.type);
+      }
+    }
     for (const e of reached(alive, game.t)) {
       game.gone.add(e.id);
       game.els.get(e.id)?.remove();
@@ -283,6 +301,23 @@ export function createDefense(root, io) {
     if (level > game.level) levelUp(level);
     renderHud();
     return true;
+  }
+
+  /** 몬스터 고유 동작 한 번: 그림을 움직이고, 몬스터에 따라 효과(포자, 먼지, 불, 불씨, 기운)를 낸다 */
+  function act(el, type) {
+    const mon = el.querySelector('.mon.art');
+    if (!mon) return;
+    mon.classList.remove('acting');
+    void mon.offsetWidth;
+    mon.classList.add('acting');
+    setTimeout(() => mon.classList.remove('acting'), 1100);
+    const fx = ACT_FX[type];
+    if (fx) {
+      const s = document.createElement('span');
+      s.className = `fx fx-${fx}`;
+      mon.appendChild(s);
+      setTimeout(() => s.remove(), 1300);
+    }
   }
 
   /** 레벨이 오르면 잠깐 알려 주고, 배경을 다음 땅으로 바꾼다 */
