@@ -103,6 +103,11 @@ export function createPlayer(ctx) {
           sfx('correct');
           abacus.celebrate();
           break;
+        case 'pop':
+          sfx('badge');
+          teacher.jump();
+          await ctx.ui.showPop(scene);
+          break;
         case 'badge':
           sfx('badge');
           teacher.jump();

@@ -1,6 +1,6 @@
 // SPEC 2.1절(중독 방지)과 CLAUDE.md 절대 규칙을 코드 전체에서 검사한다.
-// 넣지 않기로 한 것: 점수, 등급, 순위표, 무작위 보상, 하트, 연속 접속 보상, 알림, 제한 시간, 카운트다운,
-// (배지는 실력과 묶인 기술 배지만 넣기로 해서 검사에서 뺐다 — 2026-11-09)
+// 넣지 않기로 한 것: 순위표, 무작위 보상, 하트, 연속 접속 보상, 알림, 제한 시간, 카운트다운,
+// (배지는 2026-11-09, 점수·등급·레벨은 2026-11-10 부모 결정으로 검사에서 뺐다)
 // 자동으로 이어지는 다음 수업, 광고, 외부 링크, 결제, 사용 추적.
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -43,11 +43,9 @@ function findWord(text, pattern) {
 }
 
 const BANNED = [
-  [/점수|스코어|\bscore\b/i, '점수'],
   [/뽑기|가챠|gacha|loot ?box|랜덤 ?상자/i, '무작위 보상'],
   [/하트|목숨|\blives\b/i, '하트(목숨)'],
   [/순위표|리더보드|leaderboard|랭킹|ranking/i, '순위표'],
-  [/등급|레벨업|levelUp/i, '등급'],
   [/연속 접속|출석 체크|streak/i, '연속 접속 보상'],
   [/알림|푸시|Notification|PushManager/i, '알림'],
   [/제한 시간|카운트다운|countdown/i, '제한 시간과 카운트다운'],

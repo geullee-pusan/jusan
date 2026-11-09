@@ -12,6 +12,7 @@ import { BADGES, bestSeconds, earnedBadges, formatDuration, newBadges, unlockedI
 import { answerScenes, askScenes, demoScenes, islandRound, lectureParts, mergeScript, say } from './core/islands.js';
 import { parseSpokenCommand, pickSpokenNumber } from './core/numhear.js';
 import { roundEndScenes } from './core/practice.js';
+import { newlyDone, overallLevel, recommend, skillMap } from './core/skills.js';
 import { createAbacus } from './ui/abacus-view.js';
 import { createBoard } from './ui/board.js';
 import { prepareEndSound } from './ui/end-sound.js';
@@ -55,6 +56,7 @@ app.innerHTML = `
       <h1 class="logo">JUSAN</h1>
       <button class="block-btn small" data-act="mute" aria-pressed="false">🔊 소리</button>
     </header>
+    <section class="panel level-panel" id="level-panel"></section>
     <div class="islands" id="islands"></div>
     <div class="map-panels">
       <section class="panel">
@@ -68,6 +70,11 @@ app.innerHTML = `
           <div class="dress-teacher"><div id="dress-teacher"></div></div>
           <div class="hotbar items" id="items"></div>
         </div>
+      </section>
+      <section class="panel skills-panel">
+        <h2>기술 지도</h2>
+        <p class="hint">최근 8번을 보고 정해요. ●●● 됨 · ●●○ 거의 · ●○○ 아직</p>
+        <div id="skills" class="skills"></div>
       </section>
       <section class="panel">
         <h2>나의 기록</h2>
@@ -162,6 +169,35 @@ function renderMap() {
     }
     islands.appendChild(row);
   }
+  // 레벨과 선생님 추천
+  const map = skillMap(data.rounds);
+  const lv = overallLevel(map);
+  const openIds = curriculum.worlds.flatMap((w) => w.islands).filter((i) => i.open).map((i) => i.lesson);
+  const rec = recommend(data.rounds, openIds);
+  const recIsland = rec && curriculum.worlds.flatMap((w) => w.islands).find((i) => i.lesson === rec.island);
+  const recWhy = !rec ? '' : rec.why === 'almost' ? `'${rec.skill.name}'이(가) 거의예요. 조금만 더!` : rec.why === 'notyet' ? `'${rec.skill.name}'을(를) 다시 연습해 봐요.` : '아직 안 가 본 섬이에요.';
+  $('#level-panel').innerHTML = `
+    <div class="level-badge"><span class="lv-num">Lv.${lv.level}</span><span class="lv-title">${lv.title}</span></div>
+    <div class="lv-bar" aria-label="다음 레벨까지 ${lv.toNext}점"><span style="width:${((3 - lv.toNext) / 3) * 100}%"></span></div>
+    <span class="lv-next">다음 레벨까지 ${lv.toNext}점${lv.nextTitle ? ` · 다음 칭호: ${lv.nextTitle}` : ''}</span>
+    ${recIsland ? `<div class="rec"><span>🧑‍🏫 선생님 추천: <b>${recIsland.title}</b> — ${recWhy}</span><button class="block-btn green" data-go="round" data-island="${recIsland.lesson}">가기</button></div>` : ''}`;
+  // 기술 지도
+  const skillsBox = $('#skills');
+  skillsBox.innerHTML = '';
+  const DOTS = { done: '●●●', almost: '●●○', notyet: '●○○' };
+  const LABEL = { done: '됨', almost: '거의', notyet: '아직' };
+  for (const group of [...new Set(map.map((s) => s.group))]) {
+    const box = document.createElement('div');
+    box.className = 'skill-group';
+    box.innerHTML = `<h3>${group}</h3>`;
+    for (const s of map.filter((x) => x.group === group)) {
+      const row = document.createElement('div');
+      row.className = `skill ${s.state}`;
+      row.innerHTML = `<span class="skill-name">${s.name}</span><span class="skill-dots">${DOTS[s.state]}</span><span class="skill-label">${LABEL[s.state]}</span><span class="skill-count">${s.tries ? `${s.tries}번 중 ${s.hits}번` : '-'}</span>`;
+      box.appendChild(row);
+    }
+    skillsBox.appendChild(box);
+  }
   // 배지
   const got = new Set(earnedBadges(data.rounds));
   const badges = $('#badges');
@@ -202,7 +238,7 @@ function renderMap() {
   $('#records').textContent = finished ? `끝까지 푼 판: ${finished}판 · 깃발 꽂은 섬: ${islandsPlayed}곳` : '아직 푼 판이 없어요. 첫 판을 풀어 봐요!';
 }
 
-$('#islands').addEventListener('click', (e) => {
+$('#map').addEventListener('click', (e) => {
   const button = e.target.closest('[data-go]');
   if (!button) return;
   sfx('tap');
@@ -225,6 +261,12 @@ function showBadge(badge) {
       resolve();
     }, 2200),
   );
+}
+
+function showPop({ icon, title, name }) {
+  badgePop.innerHTML = `<div class="pop-icon">${icon}</div><div class="pop-title">${title}</div><div class="pop-name">${name}</div>`;
+  badgePop.hidden = false;
+  return new Promise((resolve) => setTimeout(() => { badgePop.hidden = true; resolve(); }, 2000));
 }
 
 function setAbacusVisible(on) {
@@ -379,7 +421,7 @@ function getAnswer({ allowDemo = true } = {}) {
   });
 }
 
-const player = createPlayer({ teacher, board, abacus, caption, voice: teacherVoice.voice, ui: { waitDone, showBadge, setAbacusVisible } });
+const player = createPlayer({ teacher, board, abacus, caption, voice: teacherVoice.voice, ui: { waitDone, showBadge, showPop, setAbacusVisible } });
 
 function stopAll() {
   player.stop();
@@ -421,6 +463,7 @@ async function playLecture(script, seed) {
 /** 문제 하나: 최대 두 번 답한다. 결과 { correct, firstTry } 또는 null(그만) */
 async function solveOne(script, problem, no, seed, timer, opts) {
   const ask = () => askScenes(script, problem, no, seed, opts);
+  let miss; // 처음 틀렸을 때 짐작한 이유(기술 지도에서 어느 기술 탓인지 정할 때 쓴다)
   await player.play(ask());
   for (let tries = 1; tries <= 2; tries++) {
     if (player.stopped) return null;
@@ -436,16 +479,17 @@ async function solveOne(script, problem, no, seed, timer, opts) {
     }
     if (a.type === 'demo') {
       await player.play(demoScenes(script, problem, seed));
-      return { correct: false, firstTry: false };
+      return { correct: false, firstTry: false, miss };
     }
     const res = answerScenes(script, problem, a.value, tries, seed + tries);
+    if (!res.correct && miss === undefined) miss = res.diagnosis?.kind;
     await player.play(res.scenes);
-    if (res.correct) return { correct: true, firstTry: tries === 1 };
-    if (!res.retry) return { correct: false, firstTry: false };
+    if (res.correct) return { correct: true, firstTry: tries === 1, miss };
+    if (!res.retry) return { correct: false, firstTry: false, miss };
     if (script.kind !== 'tt' && script.mode !== 'listen' && script.mode !== 'flash') await player.play([{ kind: 'abacus-clear' }]);
     if (script.mode === 'listen' || script.mode === 'flash') await player.play(ask()); // 다시 들려주고 다시 보여 준다
   }
-  return { correct: false, firstTry: false };
+  return { correct: false, firstTry: false, miss };
 }
 
 function makeTimer() {
@@ -505,6 +549,14 @@ async function runRound(script) {
     saveData(data);
   }
   player.reset();
+  // 기술 지도는 끝까지 못 풀어도 푼 만큼 바뀐다
+  const ups = newlyDone(before, data.rounds);
+  const lvBefore = overallLevel(skillMap(before));
+  const lvAfter = overallLevel(skillMap(data.rounds));
+  const celebrate = [];
+  for (const s of ups) celebrate.push({ kind: 'pop', icon: '🗺️', title: '기술 "됨"!', name: s.name }, say(script, 'skill-done', seed, { skill: s.name }));
+  if (lvAfter.level > lvBefore.level) celebrate.push({ kind: 'pop', icon: '⬆️', title: '레벨 업!', name: `Lv.${lvAfter.level} ${lvAfter.title}` }, say(script, 'level-up', seed, { level: lvAfter.level, title: lvAfter.title }));
+  if (celebrate.length && !leaving) await player.play(celebrate);
   if (record.finished) {
     const sameIsland = before.filter((r) => r.lesson === script.id);
     await player.play(roundEndScenes(script, {
