@@ -30,11 +30,11 @@ export const DIFFICULTY = {
   hard: { name: '어려움', mix: { skeleton: 2, golem: 2, dragon: 2 }, boss: true },
 };
 
-/** 몬스터가 성까지 오는 시간(초). 실물 주판으로 풀기 때문에 넉넉하게 */
+/** 몬스터가 성까지 오는 시간(초). 실물 주판으로 풀 시간을 남긴다(2026-11-10: 60·40·25초에서 조금 빠르게) */
 export const SPEEDS = {
-  slow: { name: '느리게', travel: 60 },
-  normal: { name: '보통', travel: 40 },
-  fast: { name: '빠르게', travel: 25 },
+  slow: { name: '느리게', travel: 45 },
+  normal: { name: '보통', travel: 30 },
+  fast: { name: '빠르게', travel: 20 },
 };
 
 export const WALLS = 3;
@@ -53,7 +53,7 @@ export function makeWave(seed, { difficulty, speed, count }) {
   const total = entries.reduce((s, [, w]) => s + w, 0);
   const answers = new Set();
   const enemies = [];
-  const gap = travel / 3; // 성까지 오는 시간의 3분의 1마다 하나씩
+  const gap = travel / 4; // 성까지 오는 시간의 4분의 1마다 하나씩
   for (let i = 0; i < count; i++) {
     let type;
     if (d.boss && i === count - 1) type = 'boss';
@@ -73,7 +73,7 @@ export function makeWave(seed, { difficulty, speed, count }) {
       if (!answers.has(problem.answer)) break;
     }
     answers.add(problem.answer);
-    enemies.push({ id: i, type, problem, answer: problem.answer, spawnAt: i * gap + 2, lane: i % 3 });
+    enemies.push({ id: i, type, problem, answer: problem.answer, spawnAt: i * gap + 1, lane: i % 3 });
   }
   return enemies;
 }
