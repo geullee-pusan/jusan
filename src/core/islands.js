@@ -15,7 +15,7 @@ import { makeTTRound, ttWeights } from './timestable.js';
 
 const NTH = ['', '첫 번째', '두 번째', '세 번째', '네 번째', '다섯 번째', '여섯 번째', '일곱 번째', '여덟 번째', '아홉 번째', '열 번째'];
 const read = (n) => readNumber(n);
-const FAST_MS = 230; // 맞혔을 때 다시 보여 주는 빠르기(알 한 번 움직임)
+const FAST_MS = 460; // 맞혔을 때 다시 보여 주는 빠르기(알 한 번 움직임, 2026-11-10 절반 속도로)
 
 /** 섬 대본과 공통 대사를 합친다(섬 대본이 이긴다) */
 export function mergeScript(island, common) {
