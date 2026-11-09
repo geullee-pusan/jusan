@@ -26,6 +26,51 @@ export function createBoard(root) {
       p.textContent = `${fmt(a)} × ${fmt(b)}`;
       body.appendChild(p);
     },
+    /**
+     * 여러 줄 덧셈·뺄셈 문제를 학원 문제지처럼 세로로 줄 맞춰 쓴다. 빼기 줄은 "−" 기호를 붙인다.
+     * hideFirst: 첫 줄은 주판 그림으로 보여 주므로 칠판에는 "주판 그림"이라고만 쓴다(머릿속 주판).
+     */
+    rows(rows, { hideFirst = false } = {}) {
+      this.clear();
+      const grid = document.createElement('div');
+      grid.className = 'board-rows';
+      rows.forEach((r, i) => {
+        const sign = document.createElement('span');
+        sign.className = 'board-sign';
+        sign.textContent = i === 0 ? '' : r < 0 ? '−' : '+';
+        const num = document.createElement('span');
+        num.className = 'board-num';
+        num.textContent = i === 0 && hideFirst ? '🧮' : fmt(Math.abs(r));
+        grid.append(sign, num);
+      });
+      const line = document.createElement('div');
+      line.className = 'board-line';
+      grid.appendChild(line);
+      body.appendChild(grid);
+    },
+    /** 듣고 하는 암산: 수는 쓰지 않고 몇 줄인지만 */
+    listen(count) {
+      this.clear();
+      const p = document.createElement('div');
+      p.className = 'board-problem';
+      p.textContent = '👂 잘 들어요';
+      body.appendChild(p);
+      note.textContent = `${count}줄이에요.`;
+    },
+    /** 번쩍 암산: 한 줄씩 번쩍 보여 주고 지운다. ms는 아이가 고른 빠르기 */
+    async flash(rows, ms) {
+      this.clear();
+      const p = document.createElement('div');
+      p.className = 'board-problem flash';
+      body.appendChild(p);
+      for (const [i, r] of rows.entries()) {
+        p.textContent = `${i === 0 ? '' : r < 0 ? '− ' : '+ '}${fmt(Math.abs(r))}`;
+        await new Promise((ok) => setTimeout(ok, ms));
+        p.textContent = '';
+        await new Promise((ok) => setTimeout(ok, 160));
+      }
+      p.textContent = '?';
+    },
     /** 문제 하나 아래에 답을 쓴다 */
     answer(n) {
       const p = document.createElement('div');

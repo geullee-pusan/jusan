@@ -139,6 +139,11 @@ export function createAbacus(root) {
       values[i] = value;
       draw(i);
     },
+    /** 수 하나를 그대로 놓는다(머릿속 주판의 첫 줄 그림) */
+    setNumber(n) {
+      this.setup();
+      String(n).split('').reverse().forEach((d, place) => this.set(place, Number(d)));
+    },
     /** 자리를 밝게: kind 'now'(지금 움직이는 자리), 'start'(시작 자리) */
     highlight(place, kind = 'now') {
       cols.forEach((c) => {

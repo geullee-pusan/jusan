@@ -122,6 +122,19 @@ export function createTeacher(root, look, { unit = 6 } = {}) {
     [[3, 2.4, 1], [2.2, bodyTop - 1.5, bodyFront], '#ff4fa3'],
     [[1.4, 1.4, 1.2], [0, bodyTop - 1.5, bodyFront + 0.1], '#c9186f'],
   ]);
+  item('scarf', rig, [
+    [[bodyW + 1, 3, bodyD + 1], [0, bodyTop - 1.5, 0], '#2a9d8f'],
+    [[3, 7, 1], [bodyW / 2 - 4, bodyTop - 6, bodyFront + 0.1], '#2a9d8f'],
+  ]);
+  item('backpack', rig, [
+    [[bodyW - 5, bodyH - 5, 4], [0, legH + bodyH / 2, -(bodyD / 2 + 2)], '#e76f51'],
+    [[bodyW - 9, 4, 1], [0, legH + bodyH / 2 - 3, -(bodyD / 2 + 4.5)], '#f4a261'],
+  ]);
+  item('goggles', head, [
+    [[headW + 0.4, 1.6, headD + 0.4], [0, faceTop + 1.6, 0], '#333'],
+    [[3.6, 3, 1], [-look.eyeX - 0.4, faceTop + 1.6, front + 0.5], '#4cc9f0'],
+    [[3.6, 3, 1], [look.eyeX + 0.4, faceTop + 1.6, front + 0.5], '#4cc9f0'],
+  ]);
   item('cape', rig, [[[bodyW - 1, bodyH + legH * 0.6, 1], [0, bodyTop - (bodyH + legH * 0.6) / 2, -(bodyD / 2 + 0.6)], '#9d0208']]);
 
   // 자세 하나: 몸 전체 높이에 맞춰 무대 크기를 정한다.

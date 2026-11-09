@@ -6,7 +6,7 @@
 // 설정: outfit(입힌 꾸미기 id 목록), teacherName
 
 const KEY = 'jusan:v1';
-const EMPTY = { rounds: [], outfit: [], teacherName: '큐브 선생님' };
+const EMPTY = { rounds: [], outfit: [], teacherName: '큐브 선생님', flashMs: null };
 
 export function loadData() {
   try {
@@ -17,6 +17,7 @@ export function loadData() {
       rounds: Array.isArray(data.rounds) ? data.rounds : [],
       outfit: Array.isArray(data.outfit) ? data.outfit : [],
       teacherName: typeof data.teacherName === 'string' && data.teacherName ? data.teacherName : EMPTY.teacherName,
+      flashMs: Number.isFinite(data.flashMs) ? data.flashMs : null,
     };
   } catch {
     return structuredClone(EMPTY);

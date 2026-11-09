@@ -1,18 +1,17 @@
-// JUSAN(docs/SPEC.md 0장, 2026-11-09 바뀜): 문제를 풀고 맞히는 것이 중심이다.
-//  - 지도 화면: 블록 섬(강)들, 기술 배지 선반, 선생님 꾸미기, 나와의 기록
-//  - 풀기 화면: 한 판 8문제 + 고르는 보너스 문제. 큐브 선생님이 문제를 내고 답을 듣는다.
+// JUSAN(docs/SPEC.md 0장): 문제를 풀고 맞히는 것이 중심이다.
+//  - 지도 화면: 세계와 섬(src/content/curriculum.json), 기술 배지 선반, 선생님 꾸미기, 나와의 기록
+//  - 풀기 화면: 섬마다 한 판(곱셈 8문제, 덧셈·뺄셈·암산 8문제, 곱셈구구 20문제) + 고르는 보너스 문제
 //  - 강의는 "강의 보기"를 누를 때만 본다(지도에서, 또는 문제를 풀다가 잘 모르겠을 때).
 // 아이는 실물 주판으로 풀고 말로 대답한다. 말이 안 되면 숫자판을 쓴다.
 import './ui/style.css';
 import fontUrl from 'galmuri/dist/Galmuri11-Bold.woff2?inline';
 import curriculum from './content/curriculum.json';
-import lesson from './content/lessons/mul-1digit.json';
 import look from './content/teacher-look.json';
-import script from './content/teacher.json';
+import teacherVoice from './content/teacher.json';
 import { BADGES, bestSeconds, earnedBadges, formatDuration, newBadges, unlockedItems } from './core/badges.js';
-import { lessonPlan, solveScenes } from './core/lesson.js';
+import { answerScenes, askScenes, demoScenes, islandRound, lectureParts, mergeScript, say } from './core/islands.js';
 import { parseSpokenCommand, pickSpokenNumber } from './core/numhear.js';
-import { answerScenes, askProblemScenes, bonusAskScenes, bonusIntroScenes, practiceRound, roundEndScenes, roundStartScenes } from './core/practice.js';
+import { roundEndScenes } from './core/practice.js';
 import { createAbacus } from './ui/abacus-view.js';
 import { createBoard } from './ui/board.js';
 import { prepareEndSound } from './ui/end-sound.js';
@@ -24,6 +23,15 @@ import { setMuted, speechSupported, stopSpeaking, voicesReady } from './ui/speec
 import { loadData, saveData } from './ui/storage.js';
 import { createTeacher } from './ui/teacher-view.js';
 
+// 섬 대본(src/content/lessons/*.json). common은 여러 섬이 함께 쓰는 대사다.
+const lessonFiles = import.meta.glob('./content/lessons/*.json', { eager: true, import: 'default' });
+const common = lessonFiles['./content/lessons/common.json'];
+const SCRIPTS = Object.fromEntries(
+  Object.entries(lessonFiles)
+    .filter(([path]) => !path.endsWith('common.json'))
+    .map(([, json]) => [json.id, mergeScript(json, common)]),
+);
+
 // 도트 글꼴(갈무리, SIL OFL 1.1). index.html 안에 들어 있어 오프라인에서도 보인다.
 try {
   const face = new FontFace('Galmuri', `url(${fontUrl})`);
@@ -32,8 +40,13 @@ try {
   // 글꼴을 못 불러오면 기본 글꼴로 보인다
 }
 
-const BADGE_ICON = { 'first-round': '🧱', 'zero-pad': '0️⃣', friend: '🤝', 'zero-zero': '⭕', bonus: '🚀', perfect: '👑' };
-const ITEM_ICON = { hat: '🎩', glasses: '🕶️', tie: '👔', bowtie: '🎀', cape: '🦸', crown: '👑' };
+const BADGE_ICON = { 'first-round': '🧱', 'zero-pad': '0️⃣', friend: '🤝', 'zero-zero': '⭕', bonus: '🚀', perfect: '👑', 'tt-master': '🧮', forest: '🌲', mind: '🧠' };
+const ITEM_ICON = { hat: '🎩', glasses: '🕶️', tie: '👔', bowtie: '🎀', cape: '🦸', crown: '👑', scarf: '🧣', backpack: '🎒', goggles: '🥽' };
+const FLASH_SPEEDS = [
+  { ms: 1500, label: '🐢 느리게' },
+  { ms: 1000, label: '🚶 보통' },
+  { ms: 700, label: '🐇 빠르게' },
+];
 
 const app = document.getElementById('app');
 app.innerHTML = `
@@ -81,7 +94,7 @@ app.innerHTML = `
         </div>
         <div id="board"></div>
       </section>
-      <section class="abacus-wrap"><div id="abacus"></div></section>
+      <section class="abacus-wrap" id="abacus-wrap"><div id="abacus"></div></section>
       <section id="answer" class="answer panel" hidden>
         <div class="answer-head"><span id="mic" class="mic">🎤 말로 대답해요</span><span id="heard" class="heard"></span></div>
         <div class="answer-show" id="answer-show"></div>
@@ -92,6 +105,7 @@ app.innerHTML = `
       <button class="block-btn" data-act="demo" hidden>🤝 같이 풀어 줘요</button>
       <button class="block-btn" data-act="again">🔁 다시 말해 주세요</button>
       <button class="block-btn" data-act="slower">🐢 천천히요</button>
+      <span id="speeds" class="speeds" hidden></span>
       <button class="block-btn green" data-act="yes" hidden>네</button>
       <button class="block-btn red" data-act="no" hidden>아니요</button>
       <button class="block-btn green big" data-act="done" hidden>다 했어요</button>
@@ -114,11 +128,14 @@ $('#voice-note').textContent = notes.join(' ');
 
 // ---------- 지도 화면 ----------
 const dressTeacher = createTeacher($('#dress-teacher'), look, { unit: 2.4 });
+let lastIsland = null;
 
 function renderMap() {
-  // 세계와 섬(src/content/curriculum.json). 열린 섬만 풀 수 있고, 끝까지 푼 판 수만큼 깃발을 단다.
+  // 세계와 섬. 열린 섬만 풀 수 있고, 끝까지 푼 판 수만큼 깃발을 단다. 마지막에 푼 섬에 "지금 여기".
   const islands = $('#islands');
   islands.innerHTML = '';
+  const playedIds = data.rounds.map((r) => r.lesson);
+  const here = lastIsland ?? playedIds.at(-1) ?? 'mul-1digit';
   let no = 0;
   for (const world of curriculum.worlds) {
     const row = document.createElement('section');
@@ -129,16 +146,16 @@ function renderMap() {
       no++;
       const rounds = data.rounds.filter((r) => r.lesson === isl.lesson && r.finished).length;
       const card = document.createElement('div');
-      card.className = `island ${isl.open ? 'open' : 'locked'}`;
+      card.className = `island ${isl.open ? 'open' : 'locked'} ${isl.id === here ? 'here-island' : ''}`;
       card.innerHTML = `
-        <div class="island-top"><span class="island-no">${no}</span>${isl.open ? '<span class="here">⬇ 지금 여기</span>' : ''}</div>
+        <div class="island-top"><span class="island-no">${no}</span>${isl.id === here ? '<span class="here">⬇ 지금 여기</span>' : ''}</div>
         <div class="island-body">
           <strong>${isl.title}</strong>
           <span class="learn">${isl.learn}</span>
           ${isl.open
             ? `<span class="flags">${rounds ? '🚩'.repeat(Math.min(rounds, 5)) + (rounds > 5 ? ` ×${rounds}` : '') : '아직 깃발 없음'}</span>
-               <button class="block-btn green" data-go="play">⛏️ 문제 풀기</button>
-               <button class="block-btn small" data-go="lecture">📖 강의 보기</button>`
+               <button class="block-btn green" data-go="round" data-island="${isl.lesson}">⛏️ 문제 풀기</button>
+               <button class="block-btn small" data-go="lecture" data-island="${isl.lesson}">📖 강의 보기</button>`
             : '<span class="lock">🔒 준비 중</span>'}
         </div>`;
       list.appendChild(card);
@@ -181,17 +198,15 @@ function renderMap() {
   dressTeacher.setOutfit(data.outfit);
   // 기록
   const finished = data.rounds.filter((r) => r.finished).length;
-  const best = bestSeconds(data.rounds);
-  $('#records').textContent = finished
-    ? `끝까지 푼 판: ${finished}판 · 가장 빠른 기록: ${best !== null ? formatDuration(best) : '-'}`
-    : '아직 푼 판이 없어요. 첫 판을 풀어 봐요!';
+  const islandsPlayed = new Set(data.rounds.filter((r) => r.finished).map((r) => r.lesson)).size;
+  $('#records').textContent = finished ? `끝까지 푼 판: ${finished}판 · 깃발 꽂은 섬: ${islandsPlayed}곳` : '아직 푼 판이 없어요. 첫 판을 풀어 봐요!';
 }
 
 $('#islands').addEventListener('click', (e) => {
-  const go = e.target.closest('[data-go]')?.dataset.go;
-  if (!go) return;
+  const button = e.target.closest('[data-go]');
+  if (!button) return;
   sfx('tap');
-  openPlay(go === 'lecture' ? 'lecture' : 'round');
+  openPlay(button.dataset.island, button.dataset.go);
 });
 
 // ---------- 풀기 화면 ----------
@@ -210,6 +225,10 @@ function showBadge(badge) {
       resolve();
     }, 2200),
   );
+}
+
+function setAbacusVisible(on) {
+  $('#abacus-wrap').hidden = !on;
 }
 
 /** "다 했어요" 기다리기(강의의 같이 풀기): 버튼 또는 말 */
@@ -243,6 +262,7 @@ async function listenFor(handle, isOver) {
 }
 
 /** 네/아니요 */
+let choice = null;
 function askYesNo() {
   show('yes', true);
   show('no', true);
@@ -261,20 +281,41 @@ function askYesNo() {
     listenFor((c) => (c === 'yes' ? (finish(true), true) : c === 'no' ? (finish(false), true) : false), () => done);
   });
 }
-let choice = null;
+
+/** 번쩍 암산 빠르기 고르기(아이가 고른다. 앱이 저절로 바꾸지 않는다) */
+function askFlashSpeed() {
+  const box = $('#speeds');
+  box.innerHTML = '';
+  box.hidden = false;
+  return new Promise((resolve) => {
+    for (const s of FLASH_SPEEDS) {
+      const b = document.createElement('button');
+      b.className = `block-btn ${data.flashMs === s.ms ? 'gold' : ''}`;
+      b.textContent = s.label;
+      b.onclick = () => {
+        sfx('tap');
+        box.hidden = true;
+        data.flashMs = s.ms;
+        saveData(data);
+        resolve(s.ms);
+      };
+      box.appendChild(b);
+    }
+  });
+}
 
 /**
  * 답 받기: 말 또는 숫자판. "같이 풀어 줘요", "강의 보기", "그만할래요"도 여기서 받는다.
  * @returns {Promise<{type: 'number', value: number} | {type: 'demo'} | {type: 'lecture'} | {type: 'stop'}>}
  */
 let answering = null;
-function getAnswer() {
+function getAnswer({ allowDemo = true } = {}) {
   const box = $('#answer');
   const display = $('#answer-show');
   const heard = $('#heard');
   const mic = $('#mic');
   box.hidden = false;
-  show('demo', true);
+  show('demo', allowDemo);
   let typed = '';
   const showTyped = () => (display.textContent = typed ? Number(typed).toLocaleString('ko-KR') : ' ');
   showTyped();
@@ -326,7 +367,7 @@ function getAnswer() {
           heard.textContent = `"${r.texts[0]}"`;
           typed = String(n);
           showTyped();
-          await new Promise((ok) => setTimeout(ok, 500));
+          await new Promise((ok) => setTimeout(ok, 400));
           return finish({ type: 'number', value: n });
         }
         const command = r.texts?.map(parseSpokenCommand).find(Boolean);
@@ -338,7 +379,7 @@ function getAnswer() {
   });
 }
 
-const player = createPlayer({ teacher, board, abacus, caption, voice: script.voice, ui: { waitDone, showBadge } });
+const player = createPlayer({ teacher, board, abacus, caption, voice: teacherVoice.voice, ui: { waitDone, showBadge, setAbacusVisible } });
 
 function stopAll() {
   player.stop();
@@ -346,13 +387,15 @@ function stopAll() {
   waiting?.resolve('stop');
   answering?.({ type: 'stop' });
   choice?.(false);
+  $('#speeds').hidden = true;
 }
 
-// 진도 줄: 8칸 + 보너스 칸
-function renderProgress(results, current, withBonus) {
+// 진도 줄: 문제 수만큼 칸 + 보너스 칸
+function renderProgress(total, results, current, withBonus) {
   const bar = $('#progress');
   bar.innerHTML = '';
-  for (let i = 0; i < 8; i++) {
+  bar.classList.toggle('many', total > 10);
+  for (let i = 0; i < total; i++) {
     const r = results[i];
     const slot = document.createElement('span');
     slot.className = `slot ${r ? (r.correct ? (r.firstTry ? 'gold' : 'got') : 'miss') : ''} ${i === current ? 'now' : ''}`;
@@ -367,46 +410,46 @@ function renderProgress(results, current, withBonus) {
   }
 }
 
-/** 강의 보기: 강의의 가르치는 부분(복습, 소개, 같이 풀기 4문제)만 본다 */
-async function playLecture(seed) {
-  const { parts } = lessonPlan(lesson, seed);
-  const teaching = parts.slice(0, parts.findIndex((p) => p.scenes?.some((s) => s.kind === 'board-list')));
-  for (const part of teaching) {
+/** 강의 보기 */
+async function playLecture(script, seed) {
+  for (const scenes of lectureParts(script, seed)) {
     if (player.stopped) return;
-    await player.play(part.scenes);
+    await player.play(scenes);
   }
 }
 
 /** 문제 하나: 최대 두 번 답한다. 결과 { correct, firstTry } 또는 null(그만) */
-async function solveOne(problem, no, seed, timer) {
-  await player.play(askProblemScenes(lesson, problem, no, seed));
+async function solveOne(script, problem, no, seed, timer, opts) {
+  const ask = () => askScenes(script, problem, no, seed, opts);
+  await player.play(ask());
   for (let tries = 1; tries <= 2; tries++) {
     if (player.stopped) return null;
-    const a = await getAnswer();
+    const a = await getAnswer({ allowDemo: script.kind !== 'tt' });
     if (a.type === 'stop') return stopAll(), null;
     if (a.type === 'lecture') {
       timer.pause();
-      await playLecture(seed + 99);
+      await playLecture(script, seed + 99);
       timer.resume();
-      await player.play([{ kind: 'say', text: lesson.lines['lecture-back'][0], pose: 'talk' }, ...askProblemScenes(lesson, problem, no, seed)]);
+      await player.play([say(script, 'lecture-back', seed), ...ask()]);
       tries--;
       continue;
     }
     if (a.type === 'demo') {
-      await player.play(solveScenes(lesson, problem, seed));
+      await player.play(demoScenes(script, problem, seed));
       return { correct: false, firstTry: false };
     }
-    const res = answerScenes(lesson, problem, a.value, tries, seed + tries);
+    const res = answerScenes(script, problem, a.value, tries, seed + tries);
     await player.play(res.scenes);
     if (res.correct) return { correct: true, firstTry: tries === 1 };
     if (!res.retry) return { correct: false, firstTry: false };
-    await player.play([{ kind: 'abacus-clear' }]);
+    if (script.kind !== 'tt' && script.mode !== 'listen' && script.mode !== 'flash') await player.play([{ kind: 'abacus-clear' }]);
+    if (script.mode === 'listen' || script.mode === 'flash') await player.play(ask()); // 다시 들려주고 다시 보여 준다
   }
   return { correct: false, firstTry: false };
 }
 
 function makeTimer() {
-  let start = performance.now();
+  const start = performance.now();
   let paused = 0;
   let pausedAt = null;
   return {
@@ -420,32 +463,41 @@ function makeTimer() {
 }
 
 /** 한 판 */
-async function runRound() {
+async function runRound(script) {
   const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-  const { problems, bonus } = practiceRound(seed);
+  const { problems, bonus } = islandRound(script, seed, data.rounds);
   const before = data.rounds.slice();
-  const record = { lesson: lesson.id, date: new Date().toISOString().slice(0, 10), finished: false, seconds: null, results: [], bonus: null };
+  const record = { lesson: script.id, date: new Date().toISOString().slice(0, 10), finished: false, seconds: null, results: [], bonus: null };
+  const opts = {};
+  renderProgress(problems.length, record.results, 0, false);
+  if (script.kind === 'tt') setAbacusVisible(false);
+  await player.play([say(script, 'round-start', seed, { title: script.title, count: problems.length })]);
+  if (script.mode === 'flash') {
+    await player.say('먼저 빠르기를 골라요.');
+    opts.flashMs = await askFlashSpeed();
+  }
   const timer = makeTimer();
-  renderProgress(record.results, 0, false);
-  await player.play(roundStartScenes(lesson, seed));
   for (let i = 0; i < problems.length; i++) {
     if (player.stopped) break;
-    renderProgress(record.results, i, false);
-    const res = await solveOne(problems[i], i + 1, seed + i * 7, timer);
+    renderProgress(problems.length, record.results, i, false);
+    const p = problems[i];
+    const res = await solveOne(script, p, i + 1, seed + i * 7, timer, opts);
     if (!res) break;
-    record.results.push({ key: problems[i].key, features: problems[i].features, ...res });
-    renderProgress(record.results, i + 1, false);
-    if (i < problems.length - 1) await player.say(lesson.lines.next[0]);
+    record.results.push({ key: p.key, features: p.features, a: p.a, ...res });
+    renderProgress(problems.length, record.results, i + 1, false);
+    if (i < problems.length - 1 && script.kind !== 'tt') await player.say(script.lines.next[0]);
   }
   if (!player.stopped && record.results.length === problems.length) {
     record.finished = true;
     record.seconds = Math.round(timer.seconds());
-    await player.play(bonusAskScenes(lesson, seed));
-    if (await askYesNo()) {
-      renderProgress(record.results, 'bonus', true);
-      await player.play(bonusIntroScenes(lesson, seed));
-      const res = await solveOne(bonus, 'bonus', seed + 1000, makeTimer());
-      if (res) record.bonus = { key: bonus.key, ...res };
+    if (bonus) {
+      await player.play([say(script, 'bonus-ask', seed)]);
+      if (await askYesNo()) {
+        renderProgress(problems.length, record.results, 'bonus', true);
+        await player.play([say(script, 'bonus-intro', seed)]);
+        const res = await solveOne(script, bonus, 'bonus', seed + 1000, makeTimer(), opts);
+        if (res) record.bonus = { key: bonus.key, ...res };
+      }
     }
   }
   if (record.results.length > 0) {
@@ -454,23 +506,35 @@ async function runRound() {
   }
   player.reset();
   if (record.finished) {
-    const badges = newBadges(before, data.rounds);
-    await player.play(roundEndScenes(lesson, {
+    const sameIsland = before.filter((r) => r.lesson === script.id);
+    await player.play(roundEndScenes(script, {
       correct: record.results.filter((r) => r.correct).length,
       total: problems.length,
       seconds: record.seconds,
-      best: bestSeconds(before),
-      badges,
+      best: bestSeconds(sameIsland),
+      badges: newBadges(before, data.rounds),
     }, seed));
-  } else {
+  } else if (!leaving) {
     await player.play([{ kind: 'say', text: '오늘은 여기까지 해요. 수고했어요.', pose: 'talk' }, { kind: 'fall' }]);
   }
 }
 
 let running = false;
-async function openPlay(mode) {
-  if (running) return;
+let leaving = false; // 지도로 나가는 중이면 인사 없이 끝낸다
+let currentIsland = null;
+let runPromise = Promise.resolve();
+/** 섬 열기. 앞 판이 정리되는 중이면 끝날 때까지 기다렸다가 연다 */
+function openPlay(islandId, mode) {
+  runPromise = runPromise.then(() => startPlay(islandId, mode));
+  return runPromise;
+}
+async function startPlay(islandId, mode) {
+  const script = SCRIPTS[islandId];
+  if (running || !script) return;
   running = true;
+  leaving = false;
+  currentIsland = islandId;
+  lastIsland = islandId;
   $('#map').hidden = true;
   $('#play').hidden = false;
   ['again-round', 'back-map', 'done', 'yes', 'no', 'demo'].forEach((a) => show(a, false));
@@ -478,17 +542,18 @@ async function openPlay(mode) {
   $('#nametag').textContent = data.teacherName;
   teacher.setOutfit(data.outfit);
   board.clear();
+  setAbacusVisible(true);
   abacus.setup();
   player.reset();
   await teacher.standUp();
   try {
     if (mode === 'lecture') {
-      $('#progress').innerHTML = '<span class="progress-title">📖 강의: 한 자리 곱셈</span>';
-      await playLecture(crypto.getRandomValues(new Uint32Array(1))[0]);
+      $('#progress').innerHTML = `<span class="progress-title">📖 강의: ${script.title}</span>`;
+      await playLecture(script, crypto.getRandomValues(new Uint32Array(1))[0]);
       player.reset();
-      await player.play([{ kind: 'say', text: '강의 끝! 이제 문제를 풀어 봐요.', pose: 'talk' }, { kind: 'fall' }]);
+      if (!leaving) await player.play([say(script, 'lecture-end', 0), { kind: 'fall' }]);
     } else {
-      await runRound();
+      await runRound(script);
     }
   } finally {
     running = false;
@@ -499,12 +564,14 @@ async function openPlay(mode) {
 }
 
 function toMap() {
+  leaving = true;
   stopAll();
   stopSpeaking();
   $('#play').hidden = true;
   $('#map').hidden = false;
   data = loadData();
   renderMap();
+  document.querySelector('.here-island')?.scrollIntoView({ block: 'center', inline: 'center' });
 }
 
 document.addEventListener('click', (e) => {
@@ -521,7 +588,7 @@ document.addEventListener('click', (e) => {
   if (act === 'demo') return answering?.({ type: 'demo' });
   if (act === 'lecture') return answering?.({ type: 'lecture' });
   if (act === 'to-map' || act === 'back-map') return toMap();
-  if (act === 'again-round') return openPlay('round');
+  if (act === 'again-round') return openPlay(currentIsland, 'round');
   if (act === 'mute') {
     const on = button.getAttribute('aria-pressed') !== 'true';
     document.querySelectorAll('[data-act=mute]').forEach((b) => {
@@ -534,8 +601,8 @@ document.addEventListener('click', (e) => {
 });
 
 renderMap();
-// 처음 열 때 지금 풀 수 있는 섬이 보이게
-document.querySelector('.island.open')?.scrollIntoView({ block: 'center', inline: 'center' });
+// 처음 열 때 지금 풀 섬이 보이게
+document.querySelector('.here-island')?.scrollIntoView({ block: 'center', inline: 'center' });
 window.addEventListener('pagehide', () => {
   stopSpeaking();
   stopListening();

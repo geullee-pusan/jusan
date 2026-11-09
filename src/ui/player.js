@@ -68,14 +68,34 @@ export function createPlayer(ctx) {
         case 'board-list':
           board.list(scene.items);
           break;
+        case 'board-rows':
+          board.rows(scene.rows, { hideFirst: scene.hideFirst });
+          break;
+        case 'board-listen':
+          board.listen(scene.count);
+          break;
+        case 'board-flash':
+          await board.flash(scene.rows, scene.ms);
+          break;
+        case 'board-clear':
+          board.clear();
+          break;
+        case 'abacus-visible':
+          ctx.ui.setAbacusVisible?.(scene.on);
+          break;
+        case 'abacus-set':
+          abacus.setNumber(scene.value);
+          break;
         case 'abacus-clear':
-          await abacus.clear();
+          if (scene.quiet) abacus.setup();
+          else await abacus.clear();
           if (scene.start !== null && scene.start !== undefined) abacus.highlight(scene.start, 'start');
           break;
         case 'abacus-steps':
           teacher.pose('demo');
-          await abacus.play(scene.steps, { stepMs: 700 / slow, onBead: () => sfx('bead') });
-          abacus.glowPair(scene.tensPlace, scene.onesPlace); // 곱 두 칸이 잠깐 빛난다(0 붙이기도 눈에 보이게)
+          // fast: 맞혔을 때 계산 과정을 빠르게 다시 보여 준다
+          await abacus.play(scene.steps, { stepMs: scene.fast ?? 700 / slow, onBead: () => sfx('bead') });
+          if (scene.tensPlace !== null && scene.tensPlace !== undefined) abacus.glowPair(scene.tensPlace, scene.onesPlace); // 곱 두 칸이 잠깐 빛난다
           teacher.pose('idle');
           break;
         case 'celebrate':
