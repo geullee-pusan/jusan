@@ -16,7 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SIZE = { monster: 288, background: 1600 };
 /** 오른쪽을 보고 그려진 몬스터(뒤집는다) */
-const FLIP = new Set([]);
+const FLIP = new Set(['skeleton']);
 const MIME = { '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
 
 function collect(dir, kind) {
