@@ -172,7 +172,9 @@ export function createAbacus(root) {
       for (let p = 0; p <= 4; p++) sparkle(p, { count: 5, big: true });
     },
     /** 단계들을 차례로 보여 준다(SPEC 4.2절 단계 목록). 알이 움직일 때 반짝이고, 받아올림은 크게 반짝인다. */
-    async play(steps, { stepMs = 1300, onBead } = {}) {
+    /** moveMs: 알 하나가 미끄러지는 시간(같이 풀기 0.28초, 맞혔을 때 다시 보기 0.56초) */
+    async play(steps, { stepMs = 650, moveMs = 280, onBead } = {}) {
+      frame.style.setProperty('--bead-move', `${moveMs}ms`);
       for (const s of steps) {
         this.highlight(s.place);
         await wait(stepMs * 0.35);

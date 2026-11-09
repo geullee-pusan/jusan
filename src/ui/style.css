@@ -163,7 +163,7 @@ button[aria-pressed='true'] { filter: brightness(.85); }
     radial-gradient(ellipse 35% 22% at 38% 26%, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0) 70%),
     linear-gradient(rgba(255, 255, 255, .25) 0 46%, rgba(255, 255, 255, .55) 49%, rgba(0, 0, 0, .05) 52%, rgba(0, 0, 0, .3) 100%),
     var(--bead);
-  transition: transform .56s cubic-bezier(.3, 1.4, .5, 1); z-index: 3; }
+  transition: transform var(--bead-move, 280ms) cubic-bezier(.3, 1.4, .5, 1); z-index: 3; }
 .abacus-sparkles { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
 .spark { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; background: #fff7b0;
   clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);

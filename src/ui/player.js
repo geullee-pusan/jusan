@@ -94,7 +94,8 @@ export function createPlayer(ctx) {
         case 'abacus-steps':
           teacher.pose('demo');
           // fast: 맞혔을 때 계산 과정을 빠르게 다시 보여 준다
-          await abacus.play(scene.steps, { stepMs: scene.fast ?? 1400 / slow, onBead: () => sfx('bead') });
+          // 같이 풀기는 원래 빠르기(한 단계 0.7초), 맞혔을 때 다시 보기는 절반 속도(scene.fast, 알 미끄러짐 0.56초)
+          await abacus.play(scene.steps, scene.fast ? { stepMs: scene.fast, moveMs: 560, onBead: () => sfx('bead') } : { stepMs: 700 / slow, moveMs: 280, onBead: () => sfx('bead') });
           if (scene.tensPlace !== null && scene.tensPlace !== undefined) abacus.glowPair(scene.tensPlace, scene.onesPlace); // 곱 두 칸이 잠깐 빛난다
           teacher.pose('idle');
           break;
