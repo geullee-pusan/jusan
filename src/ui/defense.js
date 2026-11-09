@@ -58,6 +58,8 @@ const ART_WIDTH = { slime: 76, bat: 96, mushroom: 70, spider: 90, zombie: 66, sk
 /** 고유 동작을 하는 때(길의 몇 %). 몬스터 번호로 고른다. 한 마리가 두 번 한다 */
 const ACT_AT = [[0.22, 0.6], [0.34, 0.72], [0.28, 0.52]];
 /** 고유 동작에 붙는 효과 */
+/** 고유 동작 소리(src/ui/sfx.js) */
+const ACT_SOUND = { slime: 'boing', bat: 'flap', raven: 'flap', gargoyle: 'flap', witch: 'cackle', mushroom: 'puff', spider: 'skitter', goblin: 'skitter', zombie: 'groan', skeleton: 'rattle', ghost: 'wail', golem: 'stomp', giant: 'stomp', knight: 'clank', dragon: 'roar', lava: 'erupt', boss: 'summon' };
 const ACT_FX = { gargoyle: 'dust', mushroom: 'spores', golem: 'dust', giant: 'dust', knight: 'dust', dragon: 'fire', lava: 'embers', boss: 'aura', witch: 'sparks', ghost: 'aura-blue', slime: 'drops' };
 /** 날거나 떠 있는 몬스터(땅 그림자를 작게, 위아래로 떠다님) */
 const FLYING = new Set(['bat', 'ghost', 'witch', 'raven', 'gargoyle']);
@@ -253,6 +255,7 @@ export function createDefense(root, io) {
       el.innerHTML = `<div class="bubble">${problemHTML(e.problem)}</div>${monHTML(e.type)}`;
       lanes[e.lane].appendChild(el);
       game.els.set(e.id, el);
+      sfx('appear');
     }
     const alive = game.enemies.filter((e) => !game.gone.has(e.id));
     for (const e of alive) {
@@ -291,6 +294,7 @@ export function createDefense(root, io) {
       show.classList.remove('nope');
       void show.offsetWidth;
       show.classList.add('nope');
+      sfx('nope');
       $('#def-heard').textContent = `${fmt(value)}: 그 답을 가진 몬스터가 없어요`;
       return false;
     }
@@ -303,7 +307,7 @@ export function createDefense(root, io) {
       el.classList.add('boom');
       setTimeout(() => el.remove(), 450);
     }
-    sfx('correct');
+    sfx('defeat');
     $('#def-heard').textContent = `${fmt(value)}! ${ENEMIES[hit.type].name} 무찌름`;
     const level = levelAfter(settings.startLevel, game.defeated.length);
     if (level > game.level) levelUp(level);
@@ -318,6 +322,7 @@ export function createDefense(root, io) {
     mon.classList.remove('acting');
     void mon.offsetWidth;
     mon.classList.add('acting');
+    sfx(ACT_SOUND[type]);
     setTimeout(() => mon.classList.remove('acting'), 1100);
     const fx = ACT_FX[type];
     if (fx) {
@@ -332,7 +337,7 @@ export function createDefense(root, io) {
   function levelUp(level) {
     const stageBefore = stageOf(game.level);
     game.level = level;
-    sfx('badge');
+    sfx('levelup');
     const stage = stageOf(level);
     setStage(stage);
     const box = $('#def-levelup');
@@ -443,7 +448,8 @@ export function createDefense(root, io) {
       });
     }
     io.save(data);
-    if (newBest || newLevel) sfx('badge');
+    if (!quit) sfx('gameover');
+    if (newBest || newLevel) setTimeout(() => sfx('badge'), quit ? 0 : 750);
     $('#def-game').hidden = true;
     const res = $('#def-result');
     res.hidden = false;
