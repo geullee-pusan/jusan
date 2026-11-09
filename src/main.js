@@ -62,7 +62,6 @@ app.innerHTML = `
       </section>
     </div>
     <p class="voice-note" id="voice-note"></p>
-    <p class="credit">글꼴: 갈무리(Galmuri) · SIL 오픈 폰트 라이선스 1.1</p>
   </section>
 
   <section id="play" class="screen play" hidden>
