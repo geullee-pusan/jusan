@@ -338,8 +338,9 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 .mon-mini .mon.art::after { display: none; }
 
 /* 배경 그림이 있는 땅: 위 4분의 1은 하늘과 먼 산, 세 줄은 그 아래 땅 위. 뒷줄 몬스터는 조금 작게(멀리 있어 보이게) */
-.def-field.has-bg[data-stage] { --veil: transparent; --line: transparent; background-size: cover; background-position: center 40%; background-repeat: no-repeat; animation: none; }
-.def-field.has-bg .def-lane { top: calc(30% + var(--lane) * 23.3%); height: 23.3%; }
+.def-field.has-bg[data-stage] { --veil: transparent; --line: transparent; background-size: cover; background-position: center bottom; background-repeat: no-repeat; animation: none; }
+/* 세 줄은 땅(--ground 아래)에만 놓는다. 그림이 넓은 화면에서 잘릴 때는 하늘 쪽만 잘리므로(아래 맞춤) 땅이 하늘로 올라가지 않는다 */
+.def-field.has-bg .def-lane { top: calc(var(--ground, 55%) + (97% - var(--ground, 55%)) * var(--lane) / 3); height: calc((97% - var(--ground, 55%)) / 3); }
 .def-field.has-bg .enemy { transform: translateX(-50%) scale(calc(.78 + var(--lane) * .11)); transform-origin: 50% 100%; }
 /* 어두운 땅(해 질 녘, 동굴, 용암)에서는 몬스터 둘레를 살짝 밝혀 잘 보이게 한다 */
 .def-field.has-bg[data-stage="2"] .mon.art img,

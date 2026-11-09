@@ -14,6 +14,13 @@ const fmt = (n) => n.toLocaleString('ko-KR');
 const ART = import.meta.glob('../content/monsters/*.webp', { eager: true, import: 'default' });
 // 배경 그림(레벨 단계마다 하나, bg-1 ~ bg-5)
 const BACKDROPS = import.meta.glob('../content/backgrounds/bg-*.webp', { eager: true, import: 'default' });
+/**
+ * 배경 그림마다 땅이 시작하는 높이(그림 위에서부터, %). 그 위는 하늘과 먼 산이다.
+ * 땅에서 걷는 몬스터는 이 아래 땅에만 선다(부모 결정, 2026-11-10). 지평선보다 조금 아래로 잡는다.
+ * 새 배경 그림을 넣으면 그림을 보고 여기에 더한다. 없으면 GROUND_DEFAULT를 쓴다.
+ */
+const GROUND = { 1: 60, 2: 50, 3: 40, 4: 62 };
+const GROUND_DEFAULT = 55;
 /** 화면에 그리는 너비(px). 셀수록 크다 */
 const ART_WIDTH = { slime: 76, bat: 96, mushroom: 70, spider: 90, zombie: 66, skeleton: 66, ghost: 74, goblin: 70, golem: 100, knight: 80, witch: 80, dragon: 124, giant: 100, lava: 104, boss: 116 };
 /** 날거나 떠 있는 몬스터(땅 그림자를 작게, 위아래로 떠다님) */
@@ -106,6 +113,7 @@ export function createDefense(root, io) {
     field.dataset.stage = stage;
     const src = BACKDROPS[`../content/backgrounds/bg-${stage}.webp`];
     field.classList.toggle('has-bg', Boolean(src));
+    field.style.setProperty('--ground', `${GROUND[stage] ?? GROUND_DEFAULT}%`);
     field.style.backgroundImage = src ? `url(${src})` : '';
   }
 
