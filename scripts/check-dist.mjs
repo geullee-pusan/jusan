@@ -1,6 +1,7 @@
 // npm run build 뒤에 도는 검사(CLAUDE.md 절대 규칙).
 //  - 앱은 dist/index.html 한 파일이다. 그 안에 자료와 코드가 다 들어 있다.
-//  - 곁들이 파일은 홈 화면 설치에 필요한 것(manifest, sw.js, 아이콘)뿐이다.
+//  - 곁들이 파일은 홈 화면 설치에 필요한 것(manifest, sw.js, 아이콘)과 성 지키기 배경음악(music/bgm-N.mp3)뿐이다.
+//    음악은 커서 앱 파일 안에 넣지 않고, 서비스 워커가 깔 때 한 번 받아 둔다(같은 곳의 파일이라 바깥 주소가 아니다).
 //  - 어디에도 바깥 주소나 사용 추적이 없다.
 // 검사하면서 sw.js에 이번 판의 번호(index.html의 해시)를 박는다.
 import { createHash } from 'node:crypto';
@@ -16,7 +17,8 @@ const APP = 'index.html';
 const EXTRAS = ['manifest.webmanifest', 'sw.js', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 
 const files = readdirSync(DIST, { recursive: true }).map((f) => String(f).replace(/\\/g, '/'));
-const expected = new Set([APP, ...EXTRAS]);
+const MUSIC = files.filter((f) => /^music\/bgm-\d+\.mp3$/.test(f)).sort();
+const expected = new Set([APP, ...EXTRAS, ...MUSIC, ...(MUSIC.length ? ['music'] : [])]);
 const extra = files.filter((f) => !expected.has(f));
 const missing = [...expected].filter((f) => !files.includes(f));
 if (extra.length) problems.push(`쓰지 않기로 한 파일이 있어요: ${extra.join(', ')}`);
@@ -60,11 +62,15 @@ for (const name of [APP, 'sw.js']) {
 
 // 이번 판의 번호를 서비스 워커에 박는다. index.html이나 서비스 워커(sw.js)가 바뀌면 번호도 바뀐다.
 const swSource = files.includes('sw.js') ? readFileSync(resolve(DIST, 'sw.js'), 'utf8') : '';
-const version = createHash('sha256').update(html).update(swSource).digest('hex').slice(0, 12);
+// 배경음악이 바뀌어도 새 판으로 쳐서 다시 받게 한다
+const hash = createHash('sha256').update(html).update(swSource);
+for (const m of MUSIC) hash.update(readFileSync(resolve(DIST, m)));
+const version = hash.digest('hex').slice(0, 12);
 if (files.includes('sw.js')) {
   const sw = readFileSync(resolve(DIST, 'sw.js'), 'utf8');
   if (!sw.includes('__VERSION__')) problems.push('sw.js에 판 번호를 박을 자리(__VERSION__)가 없어요.');
-  else writeFileSync(resolve(DIST, 'sw.js'), sw.replace('__VERSION__', version));
+  else if (!sw.includes('/*__MUSIC__*/ []')) problems.push('sw.js에 음악 목록을 넣을 자리(/*__MUSIC__*/ [])가 없어요.');
+  else writeFileSync(resolve(DIST, 'sw.js'), sw.replace('__VERSION__', version).replace('/*__MUSIC__*/ []', JSON.stringify(MUSIC.map((m) => `./${m}`))));
 }
 
 if (problems.length) {
@@ -72,8 +78,8 @@ if (problems.length) {
   for (const p of problems) console.error(`- ${p}`);
   process.exit(1);
 }
-const extraSize = EXTRAS.reduce((sum, f) => sum + readFileSync(resolve(DIST, f)).length, 0);
+const extraSize = [...EXTRAS, ...MUSIC].reduce((sum, f) => sum + readFileSync(resolve(DIST, f)).length, 0);
 console.log(
   `배포물 검사 통과: 앱 ${APP} 한 파일 ${(html.length / 1024).toFixed(1)}KB` +
-    ` + 설치용 파일 ${EXTRAS.length}개 ${(extraSize / 1024).toFixed(1)}KB, 바깥 주소·네트워크 코드 없음 (판 ${version})`,
+    ` + 설치용 파일 ${EXTRAS.length + MUSIC.length}개(배경음악 ${MUSIC.length}곡) ${(extraSize / 1024).toFixed(1)}KB, 바깥 주소·네트워크 코드 없음 (판 ${version})`,
 );

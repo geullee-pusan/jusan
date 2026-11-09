@@ -16,6 +16,8 @@ const FILES = [
   './icon-512.png',
   './icon-maskable-512.png',
   './apple-touch-icon.png',
+  // 성 지키기 배경음악(public/music/). 빌드할 때 scripts/check-dist.mjs가 목록을 채운다
+  .../*__MUSIC__*/ [],
 ];
 
 /** 받아 둔 파일의 경로. 하위 폴더 주소(GitHub Pages)에서도 맞도록 이 워커의 자리를 기준으로 푼다. */

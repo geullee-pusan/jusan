@@ -11,6 +11,11 @@ export function setSfxMuted(on) {
   muted = on;
 }
 
+/** 소리를 꺼 두었는지(배경음악도 이것을 따른다) */
+export function isSfxMuted() {
+  return muted;
+}
+
 function ctx() {
   ac ??= new (window.AudioContext || window.webkitAudioContext)();
   if (ac.state === 'suspended') ac.resume();

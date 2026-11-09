@@ -71,3 +71,25 @@
 - 게임 연결
   - 몬스터가 걷거나 날거나 떠다니는 움직임을 넣는다.
   - 배경은 레벨에 맞춰 바꿔 끼운다.
+
+## 배경음악 (게임 모드에만, 2026-11-10)
+
+배경 단계마다 한 곡씩 만든다. 레벨이 오를수록 점점 긴박해진다.
+
+- 만드는 법(Suno 같은 AI 음악 도구)
+  - 가사 없이(Instrumental) 만든다. 각 곡 1분~1분 30초쯤이면 된다.
+  - 끝과 처음이 자연스럽게 이어지는(반복 재생) 곡이 좋다.
+- 파일 위치
+  - `assets/music/bgm-<번호>.mp3`에 둔다.
+- 앱에서 쓰는 방식
+  - 게임 화면의 🎵 단추로 켜고 끈다. 처음에는 꺼져 있다.
+  - 마이크로 답을 듣기 때문에 소리는 작게 낸다.
+- 특정 게임·영화 음악을 따라 하지 않는다.
+
+| 파일 | 땅(레벨) | 스타일 프롬프트 |
+|---|---|---|
+| `bgm-1.mp3` | 풀밭(1~3) | Instrumental, light adventurous fantasy, gentle strings and flute, soft hand percussion, bright and hopeful, calm steady tempo around 95 BPM, seamless loop, no vocals, background music for a children's game |
+| `bgm-2.mp3` | 해 질 녘 들판(4~6) | Instrumental, fantasy adventure at dusk, warm strings with a hint of tension, low pizzicato bass, soft taiko drums, slightly mysterious, tempo around 105 BPM, seamless loop, no vocals, background music for a children's game |
+| `bgm-3.mp3` | 메마른 땅(7~9) | Instrumental, desert fantasy, dry plucked strings and hand drums, low drone, dusty and tense, tempo around 112 BPM, seamless loop, no vocals, background music for a children's game |
+| `bgm-4.mp3` | 어둠 동굴(10~12) | Instrumental, dark cave ambience with steady pulse, deep cello ostinato, echoing chimes like crystals, distant drips, suspenseful but not scary, tempo around 118 BPM, seamless loop, no vocals, background music for a children's game |
+| `bgm-5.mp3` | 용암 땅(13~) | Instrumental, epic final battle, driving orchestral strings, heavy taiko drums, brass stabs, urgent and heroic, tempo around 130 BPM, seamless loop, no vocals, not too loud, background music for a children's game |

@@ -7,7 +7,7 @@
 import { ENEMIES, levelAfter, levelInfo, makeEnemy, matchAnswer, PER_LEVEL, positionAt, reached, scoreFor, spawnGap, stageOf, STAGES, START_LEVELS, typesAt, WALLS } from '../core/defense.js';
 import { pickSpokenNumber } from '../core/numhear.js';
 import { listenOnce, listenSupported, stopListening } from './listen.js';
-import { sfx } from './sfx.js';
+import { isSfxMuted, sfx } from './sfx.js';
 
 const fmt = (n) => n.toLocaleString('ko-KR');
 // 몬스터 그림(부모가 만든 그림을 scripts/make-art.mjs로 다듬은 것). 그림이 아직 없는 몬스터는 블록 모양으로 그린다.
@@ -55,6 +55,9 @@ const COVERS = {
 const CASTLE = Object.values(import.meta.glob('../content/backgrounds/castle.webp', { eager: true, import: 'default' }))[0];
 /** 화면에 그리는 너비(px). 셀수록 크다 */
 const ART_WIDTH = { slime: 76, bat: 96, mushroom: 70, spider: 90, zombie: 66, skeleton: 66, ghost: 74, goblin: 70, golem: 100, knight: 80, witch: 80, dragon: 124, giant: 100, lava: 104, boss: 116, raven: 98, gargoyle: 104 };
+/** 들어 있는 배경음악 곡 번호(public/music/bgm-N.mp3). 곡을 더하면 여기에 번호를 더한다 */
+const MUSIC_TRACKS = [1, 2, 3];
+const MUSIC_VOLUME = 0.22;
 /** 고유 동작을 하는 때(길의 몇 %). 몬스터 번호로 고른다. 한 마리가 두 번 한다 */
 const ACT_AT = [[0.22, 0.6], [0.34, 0.72], [0.28, 0.52]];
 /** 고유 동작에 붙는 효과 */
@@ -95,6 +98,7 @@ export function createDefense(root, io) {
         <span class="def-lv">Lv.<b id="def-level">1</b></span>
         <span>무찌름 <b id="def-count">0</b></span>
         <button class="block-btn small" data-d="pause">⏸️ 멈춤</button>
+        <button class="block-btn small" data-d="music">🎵 끔</button>
         <button class="block-btn small red" data-d="quit">그만</button>
       </div>
       <div class="def-field" id="def-field">
@@ -226,6 +230,8 @@ export function createDefense(root, io) {
     buildKeys();
     requestAnimationFrame(frame);
     listenLoop();
+    renderMusicButton();
+    musicUpdate();
   }
 
   function renderHud() {
@@ -276,6 +282,7 @@ export function createDefense(root, io) {
       game.gone.add(e.id); // 이제 답으로 무찌를 수 없다
       strike(game.els.get(e.id), e.type);
     }
+    if (!bgm.paused && isSfxMuted()) bgm.pause();
     requestAnimationFrame(frame);
   }
 
@@ -367,6 +374,7 @@ export function createDefense(root, io) {
     if (healed) game.walls += 1;
     const stage = stageOf(level);
     setStage(stage);
+    musicUpdate(); // 배경이 바뀌면 곡도 바뀐다
     const box = $('#def-levelup');
     const newTypes = typesAt(level).filter((t) => !typesAt(level - 1).includes(t));
     const where = stage !== stageBefore ? `${STAGES[stage - 1]}에 왔어요. ` : '';
@@ -436,6 +444,63 @@ export function createDefense(root, io) {
     }
   }
 
+  // ---- 배경음악(게임 모드에만, 2026-11-10) ----
+  // public/music/bgm-N.mp3를 배경 단계에 맞춰 작게 되풀이한다. 처음에는 꺼져 있고 🎵 단추로 켠다.
+  // 마이크로 답을 듣기 때문에 소리를 작게 한다. 소리 끄기를 해 두면 나오지 않는다.
+  const bgm = new Audio();
+  bgm.loop = true;
+  bgm.volume = MUSIC_VOLUME;
+  let bgmTrack = 0;
+  let bgmFading = false;
+
+  /** 배경 단계에 쓸 곡: 그 단계 곡이 없으면 그보다 앞 단계 곡 */
+  function trackFor(stage) {
+    const ok = MUSIC_TRACKS.filter((n) => n <= stage);
+    return ok.length ? ok.at(-1) : MUSIC_TRACKS[0];
+  }
+
+  function renderMusicButton() {
+    root.querySelector('[data-d=music]').textContent = data.defenseMusic ? '🎵 켬' : '🎵 끔';
+  }
+
+  /** 지금 상태에 맞게 음악을 켜거나 끈다. 곡이 바뀌면 줄였다가 바꾼다 */
+  function musicUpdate() {
+    const want = Boolean(data.defenseMusic && game && !game.over && !game.paused && !isSfxMuted() && MUSIC_TRACKS.length);
+    if (!want) {
+      bgm.pause();
+      return;
+    }
+    const n = trackFor(stageOf(game.level));
+    if (n === bgmTrack) {
+      if (bgm.paused && !bgmFading) bgm.play().catch(() => {});
+      return;
+    }
+    if (bgm.paused || !bgmTrack) {
+      bgmTrack = n;
+      bgm.src = `./music/bgm-${n}.mp3`;
+      bgm.volume = MUSIC_VOLUME;
+      bgm.play().catch(() => {});
+      return;
+    }
+    // 곡 바꾸기: 0.6초 동안 줄이고, 바꾼 뒤 다시 키운다
+    bgmFading = true;
+    const steps = 6;
+    const down = (i) => {
+      bgm.volume = MUSIC_VOLUME * (1 - i / steps);
+      if (i < steps) return setTimeout(() => down(i + 1), 100);
+      bgmTrack = n;
+      bgm.src = `./music/bgm-${n}.mp3`;
+      bgm.play().catch(() => {});
+      const up = (j) => {
+        bgm.volume = MUSIC_VOLUME * (j / steps);
+        if (j < steps) setTimeout(() => up(j + 1), 100);
+        else bgmFading = false;
+      };
+      up(0);
+    };
+    down(0);
+  }
+
   // 다른 앱으로 가거나 화면이 꺼지면 저절로 멈춘다. 다시 시작은 아이가 누른다.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && game && !game.over) setPaused(true);
@@ -447,12 +512,14 @@ export function createDefense(root, io) {
     $('#def-paused').hidden = !on;
     root.querySelector('[data-d=pause]').textContent = on ? '▶️ 계속' : '⏸️ 멈춤';
     if (on) stopListening();
+    musicUpdate();
   }
 
   function finish(quit = false) {
     if (!game || game.over) return;
     game.over = true;
     stopListening();
+    musicUpdate();
     clearTimeout(game.levelTimer);
     data = io.load();
     data.defense ??= {};
@@ -496,6 +563,14 @@ export function createDefense(root, io) {
     sfx('tap');
     if (act === 'start' || act === 'again') start();
     if (act === 'pause') setPaused(!game?.paused);
+    if (act === 'music') {
+      data.defenseMusic = !data.defenseMusic;
+      const saved = io.load();
+      saved.defenseMusic = data.defenseMusic;
+      io.save(saved);
+      renderMusicButton();
+      musicUpdate();
+    }
     if (act === 'quit') finish(true);
     if (act === 'setup') {
       $('#def-result').hidden = true;
@@ -505,6 +580,7 @@ export function createDefense(root, io) {
     if (act === 'exit') {
       if (game && !game.over) finish(true);
       stopListening();
+      bgm.pause();
       io.onExit();
     }
   });
@@ -520,6 +596,7 @@ export function createDefense(root, io) {
     close() {
       if (game && !game.over) finish(true);
       stopListening();
+      bgm.pause();
     },
   };
 }
