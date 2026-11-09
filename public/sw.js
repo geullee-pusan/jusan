@@ -56,6 +56,15 @@ self.addEventListener('fetch', (event) => {
   const isPage = request.mode === 'navigate';
   if (!isPage && !OUR_PATHS.has(url.pathname)) return;
 
+  // 음악은 브라우저가 조각(Range)으로 달라고 한다. 아이패드(사파리)는 통째로 주면 음악을 틀지 못하므로 조각을 잘라 준다.
+  const range = request.headers.get('range');
+  if (range && !isPage) {
+    event.respondWith(
+      caches.match(request, { ignoreSearch: true }).then((hit) => (hit ? partial(hit, range) : new Response('', { status: 404 }))),
+    );
+    return;
+  }
+
   event.respondWith(
     caches
       .match(request, { ignoreSearch: true })
@@ -67,3 +76,30 @@ self.addEventListener('fetch', (event) => {
       ),
   );
 });
+
+/** 받아 둔 파일에서 요청한 조각만 잘라 206으로 준다("bytes=시작-끝") */
+async function partial(response, range) {
+  const buf = await response.arrayBuffer();
+  const size = buf.byteLength;
+  const m = /bytes=(\d*)-(\d*)/.exec(range);
+  let start = m && m[1] ? Number(m[1]) : 0;
+  let end = m && m[2] ? Number(m[2]) : size - 1;
+  if (m && !m[1] && m[2]) {
+    // "bytes=-500": 끝에서 500바이트
+    start = Math.max(0, size - Number(m[2]));
+    end = size - 1;
+  }
+  end = Math.min(end, size - 1);
+  if (start > end || start >= size) {
+    return new Response('', { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
+  }
+  return new Response(buf.slice(start, end + 1), {
+    status: 206,
+    headers: {
+      'Content-Type': response.headers.get('Content-Type') || 'audio/mpeg',
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+      'Content-Length': String(end - start + 1),
+      'Accept-Ranges': 'bytes',
+    },
+  });
+}

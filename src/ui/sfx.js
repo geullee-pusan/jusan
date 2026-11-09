@@ -16,6 +16,11 @@ export function isSfxMuted() {
   return muted;
 }
 
+/** 효과음과 배경음악이 함께 쓰는 소리 길(AudioContext). 멈춰 있으면 깨운다 */
+export function audioContext() {
+  return ctx();
+}
+
 function ctx() {
   ac ??= new (window.AudioContext || window.webkitAudioContext)();
   if (ac.state === 'suspended') ac.resume();
@@ -93,10 +98,14 @@ const SOUNDS = {
 
   // ---- 성 지키기 ----
   appear: () => noise(0, 0.32, { from: 300, to: 1400, gain: 0.05, q: 0.8 }),
+  // 무찌름: 묵직하게 "퍽"(낮은 쿵 + 짧게 깨지는 소리 + 터지는 바람) 뒤에 맑은 "띵"
   defeat: () => {
-    noise(0, 0.18, { type: 'lowpass', from: 2400, to: 300, gain: 0.16 });
-    tone(660, 0.02, 0.1, { type: 'triangle', gain: 0.1 });
-    tone(990, 0.1, 0.18, { type: 'triangle', gain: 0.1 });
+    tone(170, 0, 0.16, { type: 'sine', gain: 0.32, to: 42 });
+    tone(95, 0, 0.1, { type: 'square', gain: 0.1, to: 50 });
+    noise(0, 0.07, { type: 'highpass', from: 2200, gain: 0.24, q: 0.7 });
+    noise(0.01, 0.28, { type: 'lowpass', from: 2600, to: 180, gain: 0.2 });
+    tone(880, 0.09, 0.08, { type: 'square', gain: 0.05 });
+    tone(1320, 0.14, 0.2, { type: 'triangle', gain: 0.09 });
   },
   nope: () => tone(180, 0, 0.18, { type: 'square', gain: 0.06, to: 140 }),
   levelup: () => {

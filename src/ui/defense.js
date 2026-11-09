@@ -7,7 +7,7 @@
 import { ENEMIES, levelAfter, levelInfo, makeEnemy, matchAnswer, PER_LEVEL, positionAt, reached, scoreFor, spawnGap, stageOf, STAGES, START_LEVELS, typesAt, WALLS } from '../core/defense.js';
 import { pickSpokenNumber } from '../core/numhear.js';
 import { listenOnce, listenSupported, stopListening } from './listen.js';
-import { isSfxMuted, sfx } from './sfx.js';
+import { audioContext, isSfxMuted, sfx } from './sfx.js';
 
 const fmt = (n) => n.toLocaleString('ko-KR');
 // 몬스터 그림(부모가 만든 그림을 scripts/make-art.mjs로 다듬은 것). 그림이 아직 없는 몬스터는 블록 모양으로 그린다.
@@ -445,11 +445,33 @@ export function createDefense(root, io) {
   }
 
   // ---- 배경음악(게임 모드에만, 2026-11-10) ----
-  // public/music/bgm-N.mp3를 배경 단계에 맞춰 작게 되풀이한다. 처음에는 꺼져 있고 🎵 단추로 켠다.
+  // public/music/bgm-N.mp3를 배경 단계에 맞춰 작게 되풀이한다. 게임 중에만 나고, 처음에는 켜져 있다(🎵 단추로 끈다).
   // 마이크로 답을 듣기 때문에 소리를 작게 한다. 소리 끄기를 해 두면 나오지 않는다.
   const bgm = new Audio();
   bgm.loop = true;
   bgm.volume = MUSIC_VOLUME;
+  // 배경음악도 효과음과 같은 소리 길(Web Audio)로 내보낸다. 효과음이 나는 기기라면 음악도 나도록.
+  // (마이크를 켜 둔 동안 일부 기기는 <audio> 소리만 밀어 내는데, 같은 길로 보내면 효과음과 같이 나온다)
+  let bgmRouted = false;
+  const routeBgm = () => {
+    if (bgmRouted) return;
+    try {
+      const ac = audioContext();
+      ac.createMediaElementSource(bgm).connect(ac.destination);
+      bgmRouted = true;
+    } catch {
+      // 잇지 못하면 <audio>가 그대로 소리를 낸다
+    }
+  };
+  const playBgm = () => {
+    routeBgm();
+    try {
+      audioContext();
+    } catch {
+      // 소리 길을 못 여는 브라우저
+    }
+    bgm.play().catch(() => {});
+  };
   let bgmTrack = 0;
   let bgmFading = false;
 
@@ -472,14 +494,14 @@ export function createDefense(root, io) {
     }
     const n = trackFor(stageOf(game.level));
     if (n === bgmTrack) {
-      if (bgm.paused && !bgmFading) bgm.play().catch(() => {});
+      if (bgm.paused && !bgmFading) playBgm();
       return;
     }
     if (bgm.paused || !bgmTrack) {
       bgmTrack = n;
       bgm.src = `./music/bgm-${n}.mp3`;
       bgm.volume = MUSIC_VOLUME;
-      bgm.play().catch(() => {});
+      playBgm();
       return;
     }
     // 곡 바꾸기: 0.6초 동안 줄이고, 바꾼 뒤 다시 키운다
@@ -490,7 +512,7 @@ export function createDefense(root, io) {
       if (i < steps) return setTimeout(() => down(i + 1), 100);
       bgmTrack = n;
       bgm.src = `./music/bgm-${n}.mp3`;
-      bgm.play().catch(() => {});
+      playBgm();
       const up = (j) => {
         bgm.volume = MUSIC_VOLUME * (j / steps);
         if (j < steps) setTimeout(() => up(j + 1), 100);
