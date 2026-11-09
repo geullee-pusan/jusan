@@ -510,3 +510,14 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 .story-controls { position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; gap: 14px; z-index: 3; }
 .story-controls [data-s=next].ready { animation: bob 1.2s ease-in-out infinite; }
 .def-story { margin: 10px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+/* 새 그림 A1(빛나는 주판): 성 오른쪽 하늘에 크게 */
+.s-art.art-A1 { left: 58%; top: 46%; max-width: 40%; max-height: 58%; }
+/* 새 그림 A3(빛의 주판알): 아래에서 떠올라 빛난다 */
+.s-art.art-A3 { max-width: 26%; max-height: 40%; top: 40%; animation: art-bead-rise 2.4s ease-out both, art-bead-glow 1.6s ease-in-out 2.4s infinite alternate; }
+@keyframes art-bead-rise { from { transform: translate(-50%, 0) scale(.3); opacity: 0; } to { transform: translate(-50%, -55%) scale(1); opacity: 1; } }
+@keyframes art-bead-glow { from { transform: translate(-50%, -55%); filter: drop-shadow(0 0 18px rgba(255, 220, 120, .6)); } to { transform: translate(-50%, -60%); filter: drop-shadow(0 0 36px rgba(255, 230, 140, 1)); } }
+/* 새 그림 A4(작아진 마왕): 오른쪽 땅 위에 선다 */
+.s-art.art-A4 { left: auto; top: auto; right: 20%; bottom: 23%; transform: none; max-width: 30%; max-height: 50%; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .45)); }
+/* 장면 전체 그림(A2, A5): 잘리지 않게 다 보여 주고(위쪽에 맞춤), 남는 곳은 같은 그림을 흐리게 */
+.story-layer.full-art { background-size: contain; background-position: center 12%; background-color: transparent; }
+.story-stage.blurfill::before { content: ''; position: absolute; inset: -30px; background: var(--fill) center / cover no-repeat; filter: blur(16px) brightness(.75); }

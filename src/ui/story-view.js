@@ -61,13 +61,21 @@ export function createStoryView(root, io) {
   /** 그림 한 장을 꾸민다 */
   function drawPanel(p) {
     const layer = $('.story-layer');
-    layer.className = `story-layer motion-${p.motion ?? 'zoom'}${p.night ? ' night' : ''}`;
     const a = p.art ? art(p.art) : null;
+    // 밤 장면: 새 그림(원래 밤 그림)이 있으면 어둡게 덮지 않는다
+    layer.className = `story-layer motion-${p.motion ?? 'zoom'}${p.night && !a ? ' night' : ''}`;
     const bg = a && FULL_ART.has(p.art) ? a : BACKDROPS[`../content/backgrounds/bg-${p.bg}.webp`];
     layer.style.backgroundImage = bg ? `url(${bg})` : '';
+    // 장면 전체 그림(A2, A5)은 잘리지 않게 다 보여 주고, 남는 위아래는 같은 그림을 흐리게 채운다
+    const full = Boolean(a && FULL_ART.has(p.art));
+    layer.classList.toggle('full-art', full);
+    $('.story-stage').classList.toggle('blurfill', full);
+    $('.story-stage').style.setProperty('--fill', full ? `url(${a})` : 'none');
     let html = '';
     if (p.castle && CASTLE && !(a && FULL_ART.has(p.art))) {
-      html += `<img class="s-castle at-${p.castle}" src="${CASTLE}" alt="">`;
+      // 새 그림을 가운데에 크게 겹칠 때는 성을 왼쪽으로 비켜 세운다
+      const at = a && p.castle === 'center' ? 'left' : p.castle;
+      html += `<img class="s-castle at-${at}" src="${CASTLE}" alt="">`;
       if (p.effect === 'abacus-glow' && !a) html += '<div class="s-abacus at-castle-top">' + '<i></i>'.repeat(5) + '</div>';
     }
     (p.monsters ?? []).forEach((t, i) => {
