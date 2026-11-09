@@ -88,6 +88,42 @@ export function createTeacher(root, look, { unit = 6 } = {}) {
   const mouthBase = mouth.style.transform;
   const eyeBase = eyes.map((e) => e.style.transform);
 
+  // 꾸미기(배지로 연다, src/core/badges.js). 모두 블록으로 만든다. 처음에는 숨겨 둔다.
+  const outfit = {};
+  const item = (id, parent, boxes) => {
+    const group = el('div', 'teacher-part teacher-item');
+    group.style.display = 'none';
+    parent.appendChild(group);
+    for (const [size, at, color] of boxes) box(group, size, at, color);
+    outfit[id] = group;
+  };
+  const bodyFront = bodyD / 2 + 0.5;
+  item('hat', head, [
+    [[headW + 4, 2, headD + 4], [0, headH + 1, 0], '#d62828'],
+    [[headW, 6, headD], [0, headH + 5, 0], '#d62828'],
+    [[headW + 0.2, 1.5, headD + 0.2], [0, headH + 2.8, 0], '#1b1b1b'],
+  ]);
+  item('crown', head, [
+    [[headW, 2, headD], [0, headH + 1, 0], '#f2c230'],
+    ...[[-4, -4], [4, -4], [-4, 4], [4, 4], [0, 4]].map(([x, z]) => [[2, 3, 2], [x, headH + 3.5, z], '#f2c230']),
+    [[1.6, 1.6, 0.6], [0, headH + 1, headD / 2 + 0.3], '#e63946'],
+  ]);
+  item('glasses', head, [
+    [[4, 4.4, 1], [-look.eyeX - 0.5, faceTop - eyeH / 2, front + 0.6], '#111'],
+    [[4, 4.4, 1], [look.eyeX + 0.5, faceTop - eyeH / 2, front + 0.6], '#111'],
+    [[2, 1, 1], [0, faceTop - 1, front + 0.6], '#111'],
+  ]);
+  item('tie', rig, [
+    [[3, 2, 1], [0, bodyTop - 1.5, bodyFront], '#c1121f'],
+    [[2.4, 10, 1], [0, bodyTop - 8, bodyFront], '#c1121f'],
+  ]);
+  item('bowtie', rig, [
+    [[3, 2.4, 1], [-2.2, bodyTop - 1.5, bodyFront], '#ff4fa3'],
+    [[3, 2.4, 1], [2.2, bodyTop - 1.5, bodyFront], '#ff4fa3'],
+    [[1.4, 1.4, 1.2], [0, bodyTop - 1.5, bodyFront + 0.1], '#c9186f'],
+  ]);
+  item('cape', rig, [[[bodyW - 1, bodyH + legH * 0.6, 1], [0, bodyTop - (bodyH + legH * 0.6) / 2, -(bodyD / 2 + 0.6)], '#9d0208']]);
+
   // 자세 하나: 몸 전체 높이에 맞춰 무대 크기를 정한다.
   const totalH = legH + bodyH + headH;
   root.style.setProperty('--teacher-height', `${totalH * U}px`);
@@ -95,6 +131,7 @@ export function createTeacher(root, look, { unit = 6 } = {}) {
   let yaw = -18;
   let pitch = -6;
   let fallen = false;
+  let jumping = false;
   let talking = false;
   let alive = true;
   let t = 0;
@@ -106,7 +143,7 @@ export function createTeacher(root, look, { unit = 6 } = {}) {
     last = now;
     t += dt;
     scene.style.transform = `rotateX(${pitch}deg) rotateY(${yaw}deg)`;
-    if (!fallen) rig.style.transform = `translateY(${Math.sin(t * 2) * 1.5 + (talking ? Math.abs(Math.sin(t * 9)) * -2 : 0)}px)`;
+    if (!fallen && !jumping) rig.style.transform = `translateY(${Math.sin(t * 2) * 1.5 + (talking ? Math.abs(Math.sin(t * 9)) * -2 : 0)}px)`;
     if (talking) setMouth(Math.sin(t * 22) > 0);
     requestAnimationFrame(frame);
   }
@@ -154,6 +191,28 @@ export function createTeacher(root, look, { unit = 6 } = {}) {
       armL.style.transform = p.armL;
       armR.style.transform = p.armR;
       head.style.transform = p.head;
+    },
+    /** 꾸미기를 입힌다. 모자와 금관은 함께 쓰지 않는다(금관이 이긴다) */
+    setOutfit(ids) {
+      const on = new Set(ids);
+      if (on.has('crown')) on.delete('hat');
+      for (const [id, group] of Object.entries(outfit)) group.style.display = on.has(id) ? '' : 'none';
+    },
+    /** 신나서 폴짝 뛴다(처음 해낸 순간, 배지를 받을 때) */
+    jump() {
+      jumping = true;
+      rig.style.transition = 'transform .18s ease-out';
+      rig.style.transform = `translateY(${-6 * U}px)`;
+      return new Promise((resolve) =>
+        setTimeout(() => {
+          rig.style.transform = '';
+          setTimeout(() => {
+            rig.style.transition = '';
+            jumping = false;
+            resolve();
+          }, 200);
+        }, 180),
+      );
     },
     /** 입을 움직이기 시작하거나 멈춘다 */
     talking(on) {

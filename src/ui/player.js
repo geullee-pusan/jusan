@@ -1,23 +1,38 @@
-// 장면 재생기(docs/SPEC.md 7~8장). src/core/lesson.js가 만든 장면을 차례로 보여 주고 읽는다.
-// 말할 때는 자막을 늘 보여 준다. 목소리는 하나로 일정하다(teacher.json의 voice).
+// 장면 재생기(docs/SPEC.md 7~8장). src/core의 lesson.js·practice.js가 만든 장면을 차례로 보여 주고 읽는다.
+// 말할 때는 대화창에 글자가 한 글자씩 나타난다(자막은 늘 보인다). 목소리는 하나로 일정하다(teacher.json의 voice).
 import { playEndSound } from './end-sound.js';
+import { sfx } from './sfx.js';
 import { speak as speakLine, stopSpeaking, wait } from './speech.js';
 
 /**
  * @param {{teacher, board, abacus, caption: HTMLElement, voice: {pitch, rate},
- *          ui: {waitDone: (prompt: string) => Promise<string>}}} ctx
- *   ui.waitDone: "다 했어요"를 기다린다. 'done' 또는 'stop'을 돌려준다.
+ *          ui: {waitDone: (prompt: string) => Promise<string>, showBadge: (badge) => Promise<void>}}} ctx
  */
 export function createPlayer(ctx) {
   const { teacher, board, abacus, caption } = ctx;
   let stopped = false;
   let slow = 1; // "천천히요"를 누를 때마다 줄어든다
   let lastLine = null;
+  let typing = 0;
+
+  /** 대화창에 글자를 한 글자씩 쓴다(setInterval 없이) */
+  function typeText(text) {
+    const my = ++typing;
+    const chars = [...text];
+    let n = 0;
+    const step = () => {
+      if (my !== typing) return;
+      n = Math.min(chars.length, n + 2);
+      caption.textContent = chars.slice(0, n).join('');
+      if (n < chars.length) setTimeout(step, 28);
+    };
+    step();
+  }
 
   async function say(text, pose = 'talk') {
     if (stopped) return;
     lastLine = { text, pose };
-    caption.textContent = text;
+    typeText(text);
     teacher.pose(pose);
     let started = false;
     const begin = () => {
@@ -30,6 +45,8 @@ export function createPlayer(ctx) {
     await speakLine(text, voice, { onStart: begin });
     clearTimeout(early);
     teacher.talking(false);
+    typing++;
+    caption.textContent = text;
     await wait(180 / slow);
   }
 
@@ -45,18 +62,30 @@ export function createPlayer(ctx) {
         case 'board-problem':
           board.problem(scene.a, scene.b);
           break;
+        case 'board-answer':
+          board.answer(scene.value);
+          break;
         case 'board-list':
           board.list(scene.items);
           break;
         case 'abacus-clear':
-          await abacus.clear(scene.columns);
+          await abacus.clear();
           if (scene.start !== null && scene.start !== undefined) abacus.highlight(scene.start, 'start');
           break;
         case 'abacus-steps':
           teacher.pose('demo');
-          await abacus.play(scene.steps, { stepMs: 700 / slow });
+          await abacus.play(scene.steps, { stepMs: 700 / slow, onBead: () => sfx('bead') });
           abacus.glowPair(scene.tensPlace, scene.onesPlace); // 곱 두 칸이 잠깐 빛난다(0 붙이기도 눈에 보이게)
           teacher.pose('idle');
+          break;
+        case 'celebrate':
+          sfx('correct');
+          abacus.celebrate();
+          break;
+        case 'badge':
+          sfx('badge');
+          teacher.jump();
+          await ctx.ui.showBadge(scene.badge);
           break;
         case 'wait': {
           teacher.pose('idle');
@@ -68,6 +97,7 @@ export function createPlayer(ctx) {
           await teacher.nod();
           break;
         case 'fall':
+          typing++;
           caption.textContent = '';
           playEndSound(); // 쓰러지기 시작하는 순간에 소리가 난다
           await teacher.fall();

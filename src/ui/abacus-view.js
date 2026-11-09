@@ -70,7 +70,7 @@ export function createAbacus(root) {
   function measure() {
     const width = frame.clientWidth || 600;
     const colW = width / RODS;
-    const beadW = Math.min(colW * 0.94, 64);
+    const beadW = Math.min(colW * 0.94, 46);
     const beadH = beadW * 0.55;
     size = { colW, beadW, beadH, upper: beadH * 2 + 4, gap: Math.max(6, beadH * 0.32), lower: beadH * 5 + 4 };
     frame.style.setProperty('--bead-w', `${beadW}px`);
@@ -167,12 +167,13 @@ export function createAbacus(root) {
       for (let p = 0; p <= 4; p++) sparkle(p, { count: 5, big: true });
     },
     /** 단계들을 차례로 보여 준다(SPEC 4.2절 단계 목록). 알이 움직일 때 반짝이고, 받아올림은 크게 반짝인다. */
-    async play(steps, { stepMs = 650 } = {}) {
+    async play(steps, { stepMs = 650, onBead } = {}) {
       for (const s of steps) {
         this.highlight(s.place);
         await wait(stepMs * 0.35);
         this.set(s.place, s.after);
         sparkle(s.place, { big: s.carry });
+        onBead?.();
         await wait(stepMs * 0.65);
       }
       this.highlight(null);
