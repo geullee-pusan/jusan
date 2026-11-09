@@ -5,6 +5,7 @@
 // 아이는 실물 주판으로 풀고 말로 대답한다. 말이 안 되면 숫자판을 쓴다.
 import './ui/style.css';
 import fontUrl from 'galmuri/dist/Galmuri11-Bold.woff2?inline';
+import curriculum from './content/curriculum.json';
 import lesson from './content/lessons/mul-1digit.json';
 import look from './content/teacher-look.json';
 import script from './content/teacher.json';
@@ -33,12 +34,6 @@ try {
 
 const BADGE_ICON = { 'first-round': '🧱', 'zero-pad': '0️⃣', friend: '🤝', 'zero-zero': '⭕', bonus: '🚀', perfect: '👑' };
 const ITEM_ICON = { hat: '🎩', glasses: '🕶️', tie: '👔', bowtie: '🎀', cape: '🦸', crown: '👑' };
-const ISLANDS = [
-  { id: 'mul-1digit', no: 1, title: '한 자리 곱셈', open: true },
-  { id: 'mul-2digit', no: 2, title: '두 자리 곱셈', open: false },
-  { id: 'div-1digit', no: 3, title: '나눗셈', open: false },
-  { id: 'add-sub', no: 4, title: '덧셈·뺄셈', open: false },
-];
 
 const app = document.getElementById('app');
 app.innerHTML = `
@@ -122,18 +117,34 @@ $('#voice-note').textContent = notes.join(' ');
 const dressTeacher = createTeacher($('#dress-teacher'), look, { unit: 2.4 });
 
 function renderMap() {
+  // 세계와 섬(src/content/curriculum.json). 열린 섬만 풀 수 있고, 끝까지 푼 판 수만큼 깃발을 단다.
   const islands = $('#islands');
   islands.innerHTML = '';
-  for (const isl of ISLANDS) {
-    const card = document.createElement('div');
-    card.className = `island ${isl.open ? 'open' : 'locked'}`;
-    card.innerHTML = `
-      <div class="island-top"><span class="island-no">${isl.no}</span></div>
-      <div class="island-body">
-        <strong>${isl.title}</strong>
-        ${isl.open ? '<button class="block-btn green" data-go="play">⛏️ 문제 풀기</button><button class="block-btn small" data-go="lecture">📖 강의 보기</button>' : '<span class="lock">🔒 준비 중</span>'}
-      </div>`;
-    islands.appendChild(card);
+  let no = 0;
+  for (const world of curriculum.worlds) {
+    const row = document.createElement('section');
+    row.className = `world-row biome-${world.biome}`;
+    row.innerHTML = `<header class="world-head"><h2>${world.name}</h2><span>${world.about}</span></header><div class="world-islands"></div>`;
+    const list = row.querySelector('.world-islands');
+    for (const isl of world.islands) {
+      no++;
+      const rounds = data.rounds.filter((r) => r.lesson === isl.lesson && r.finished).length;
+      const card = document.createElement('div');
+      card.className = `island ${isl.open ? 'open' : 'locked'}`;
+      card.innerHTML = `
+        <div class="island-top"><span class="island-no">${no}</span>${isl.open ? '<span class="here">⬇ 지금 여기</span>' : ''}</div>
+        <div class="island-body">
+          <strong>${isl.title}</strong>
+          <span class="learn">${isl.learn}</span>
+          ${isl.open
+            ? `<span class="flags">${rounds ? '🚩'.repeat(Math.min(rounds, 5)) + (rounds > 5 ? ` ×${rounds}` : '') : '아직 깃발 없음'}</span>
+               <button class="block-btn green" data-go="play">⛏️ 문제 풀기</button>
+               <button class="block-btn small" data-go="lecture">📖 강의 보기</button>`
+            : '<span class="lock">🔒 준비 중</span>'}
+        </div>`;
+      list.appendChild(card);
+    }
+    islands.appendChild(row);
   }
   // 배지
   const got = new Set(earnedBadges(data.rounds));
@@ -524,6 +535,8 @@ document.addEventListener('click', (e) => {
 });
 
 renderMap();
+// 처음 열 때 지금 풀 수 있는 섬이 보이게
+document.querySelector('.island.open')?.scrollIntoView({ block: 'center', inline: 'center' });
 window.addEventListener('pagehide', () => {
   stopSpeaking();
   stopListening();

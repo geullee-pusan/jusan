@@ -43,11 +43,25 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 /* ---- 지도 ---- */
 .map-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .logo { font-size: 2.6em; letter-spacing: .08em; color: #fff; text-shadow: 4px 4px 0 #1d5fd6, 6px 6px 0 #222; }
-.islands { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin: 18px 0; }
+.islands { display: flex; flex-direction: column; gap: 16px; margin: 14px 0 18px; }
+.world-row { border: 3px solid #222; padding: 10px 12px 16px; box-shadow: 0 4px 0 #222; }
+.world-head { display: flex; align-items: baseline; gap: 12px; color: #fff; text-shadow: 2px 2px 0 #222; flex-wrap: wrap; }
+.world-head span { font-size: .85em; }
+.world-islands { display: flex; gap: 16px; overflow-x: auto; padding: 30px 4px 8px; }
+.world-islands .island { flex: 0 0 190px; }
+.biome-forest { background: repeating-linear-gradient(45deg, #3f8f2a 0 18px, #47a031 18px 36px); }
+.biome-mountain { background: repeating-linear-gradient(45deg, #7d858c 0 18px, #8a9299 18px 36px); }
+.biome-sea { background: repeating-linear-gradient(45deg, #2b78c5 0 18px, #3386d6 18px 36px); }
+.biome-sky { background: repeating-linear-gradient(45deg, #7fb7f0 0 18px, #8fc2f5 18px 36px); }
+.biome-castle { background: repeating-linear-gradient(45deg, #8e6fb3 0 18px, #9b7cc0 18px 36px); }
+.learn { font-size: .8em; line-height: 1.35; }
+.flags { font-size: .85em; }
+.here { position: absolute; right: 6px; top: -24px; background: var(--gold); color: #3a2a00; border: 3px solid #222; padding: 0 6px; font-size: .75em; animation: bob 1.2s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-4px); } }
 .island { position: relative; }
 .island-top { height: 22px; background: var(--grass); border: 3px solid #222; border-bottom: 0; box-shadow: inset 0 -6px 0 var(--grass-dark); position: relative; }
 .island-no { position: absolute; left: 10px; top: -22px; background: #fff; border: 3px solid #222; padding: 0 8px; font-weight: 700; }
-.island-body { background: repeating-linear-gradient(90deg, var(--dirt) 0 22px, var(--dirt-dark) 22px 24px); border: 3px solid #222; border-top: 0; padding: 12px; min-height: 150px; display: flex; flex-direction: column; gap: 10px; color: #fff; text-shadow: 2px 2px 0 rgba(0, 0, 0, .5); box-shadow: 0 6px 0 #222; }
+.island-body { background: repeating-linear-gradient(90deg, var(--dirt) 0 22px, var(--dirt-dark) 22px 24px); border: 3px solid #222; border-top: 0; padding: 10px; min-height: 170px; display: flex; flex-direction: column; gap: 10px; color: #fff; text-shadow: 2px 2px 0 rgba(0, 0, 0, .5); box-shadow: 0 6px 0 #222; }
 .island-body strong { font-size: 1.25em; }
 .island.locked { filter: grayscale(.8) brightness(.95); }
 .lock { margin-top: auto; }
