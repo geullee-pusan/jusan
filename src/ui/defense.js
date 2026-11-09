@@ -6,6 +6,9 @@
 //  - 성에 닿으면 성벽이 한 칸 깎인다. 세 칸이 다 깎이면 끝. 언제든 멈추거나 그만할 수 있다.
 import { ENEMIES, levelAfter, levelInfo, makeEnemy, matchAnswer, PER_LEVEL, positionAt, reached, scoreFor, spawnGap, stageOf, STAGES, START_LEVELS, typesAt, WALLS } from '../core/defense.js';
 import { pickSpokenNumber } from '../core/numhear.js';
+import { replayable, sceneOnLevelUp, sceneOnStart } from '../core/story.js';
+import story from '../content/story.json';
+import { createStoryView } from './story-view.js';
 import { listenOnce, listenSupported, stopListening } from './listen.js';
 import { audioContext, isSfxMuted, sfx } from './sfx.js';
 
@@ -89,6 +92,7 @@ export function createDefense(root, io) {
       <div class="def-row"><b>시작 레벨</b><span class="def-choices" data-choice="startLevel"></span></div>
       <div class="def-legend" id="def-legend"></div>
       <p class="def-best" id="def-best"></p>
+      <div class="def-story" id="def-story"></div>
       <button class="block-btn green big" data-d="start">⚔️ 시작</button>
     </section>
     <section class="def-game" id="def-game" hidden>
@@ -143,6 +147,8 @@ export function createDefense(root, io) {
     const lv = settings.startLevel;
     $('#def-legend').innerHTML = `<b>Lv.${lv}</b> · ${STAGES[stageOf(lv) - 1]} · 몬스터가 성까지 ${levelInfo(lv).travel}초<br>나오는 몬스터: ${typesAt(lv).map((t) => `<span class="mon-mini">${monHTML(t)}</span> ${ENEMIES[t].name}(${ENEMIES[t].points}점)`).join(' · ')}`;
     const best = data.defense ?? {};
+    const seen = data.storySeen ?? [];
+    $('#def-story').innerHTML = `<b>📖 이야기 다시 보기</b> ${replayable(seen).map((id) => `<button class="block-btn small" data-d="story" data-id="${id}">${story.scenes[id].title}</button>`).join('')}`;
     $('#def-best').textContent = best.bestScore ? `최고 점수 ${fmt(best.bestScore)}점 · 가장 높이 간 레벨 Lv.${best.bestLevel ?? 1}` : '아직 기록이 없어요. 첫 판을 해 봐요!';
   }
 
@@ -232,6 +238,8 @@ export function createDefense(root, io) {
     listenLoop();
     renderMusicButton();
     musicUpdate();
+    const sid = sceneOnStart(settings.startLevel, data.storySeen ?? []);
+    if (sid) runStory(sid);
   }
 
   function renderHud() {
@@ -366,6 +374,7 @@ export function createDefense(root, io) {
 
   /** 레벨이 오르면 잠깐 알려 주고, 배경을 다음 땅으로 바꾼다 */
   function levelUp(level) {
+    const from = game.level;
     const stageBefore = stageOf(game.level);
     game.level = level;
     sfx('levelup');
@@ -387,6 +396,8 @@ export function createDefense(root, io) {
     box.classList.add('show');
     clearTimeout(game.levelTimer);
     game.levelTimer = setTimeout(() => (box.hidden = true), 2600);
+    const sid = sceneOnLevelUp(from, level, data.storySeen ?? []);
+    if (sid) runStory(sid, { defeated: game.defeated.length });
   }
 
   // 숫자판
@@ -444,6 +455,37 @@ export function createDefense(root, io) {
     }
   }
 
+  // ---- 이야기 장면(docs/story.md) ----
+  const storyView = createStoryView(root, {
+    outfit: () => io.load().outfit ?? [],
+    music: (n) => {
+      storyTrack = n;
+      musicUpdate();
+    },
+  });
+
+  /** 장면을 보여 주는 동안 게임 시간을 멈춘다(난이도에 영향 없음). 다 보면 본 장면으로 적어 둔다 */
+  async function runStory(id, values = {}) {
+    const my = game && !game.over ? game : null;
+    if (my) {
+      my.paused = true;
+      stopListening();
+    }
+    await storyView.play(id, values);
+    const saved = io.load();
+    saved.storySeen = [...new Set([...(saved.storySeen ?? []), id])];
+    if (id === 'ending' && my) {
+      saved.defense ??= {};
+      saved.defense.heroDefeated = values.defeated;
+    }
+    io.save(saved);
+    data.storySeen = saved.storySeen;
+    if (saved.defense?.heroDefeated !== undefined) data.defense = { ...(data.defense ?? {}), heroDefeated: saved.defense.heroDefeated };
+    // 장면 동안 아이가 멈춤을 눌렀거나 화면이 가려져 멈췄으면 그대로 둔다
+    if (my && game === my && !my.over && $('#def-paused').hidden) my.paused = false;
+    musicUpdate();
+  }
+
   // ---- 배경음악(게임 모드에만, 2026-11-10) ----
   // public/music/bgm-N.mp3를 배경 단계에 맞춰 작게 되풀이한다. 게임 중에만 나고, 처음에는 켜져 있다(🎵 단추로 끈다).
   // 마이크로 답을 듣기 때문에 소리를 작게 한다. 소리 끄기를 해 두면 나오지 않는다.
@@ -473,6 +515,7 @@ export function createDefense(root, io) {
     bgm.play().catch(() => {});
   };
   let bgmTrack = 0;
+  let storyTrack = null; // 이야기 장면이 고른 곡(장면이 끝나면 null)
   let bgmFading = false;
 
   /** 배경 단계에 쓸 곡: 그 단계 곡이 없으면 그보다 앞 단계 곡 */
@@ -487,12 +530,13 @@ export function createDefense(root, io) {
 
   /** 지금 상태에 맞게 음악을 켜거나 끈다. 곡이 바뀌면 줄였다가 바꾼다 */
   function musicUpdate() {
-    const want = Boolean(!data.musicOff && game && !game.over && !game.paused && !isSfxMuted() && MUSIC_TRACKS.length);
+    const inGame = Boolean(game && !game.over && !game.paused);
+    const want = Boolean(!data.musicOff && !isSfxMuted() && MUSIC_TRACKS.length && (storyTrack !== null || inGame));
     if (!want) {
       bgm.pause();
       return;
     }
-    const n = trackFor(stageOf(game.level));
+    const n = trackFor(storyTrack ?? stageOf(game.level));
     if (n === bgmTrack) {
       if (bgm.paused && !bgmFading) playBgm();
       return;
@@ -585,6 +629,7 @@ export function createDefense(root, io) {
     sfx('tap');
     if (act === 'start' || act === 'again') start();
     if (act === 'pause') setPaused(!game?.paused);
+    if (act === 'story') runStory(e.target.closest('[data-id]').dataset.id, { defeated: data.defense?.heroDefeated ?? 0 }).then(() => renderSetup());
     if (act === 'music') {
       data.musicOff = !data.musicOff;
       const saved = io.load();

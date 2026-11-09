@@ -1,6 +1,7 @@
 // 기술 배지와 선생님 꾸미기(docs/SPEC.md 2.1절, 2026-11-09). 순수 함수다.
 // 배지는 그 기술을 실제로 해냈을 때만 받는다. 무작위로 주지 않는다.
 // 기록(판들의 결과)에서 언제든 다시 계산할 수 있다. 기록이 원본이다.
+import { LEVELS } from './defense.js';
 
 /** 배지 목록. item: 이 배지로 열리는 선생님 꾸미기 */
 export const BADGES = [
@@ -13,6 +14,7 @@ export const BADGES = [
   { id: 'tt-master', name: '구구 박사', how: '곱셈구구 스무 문제 중 열아홉 개 넘게 한 번에 맞혔어요', item: { id: 'scarf', name: '목도리' } },
   { id: 'forest', name: '숲 탐험가', how: '덧셈·뺄셈 숲의 여섯 섬을 모두 한 판씩 끝까지 풀었어요', item: { id: 'backpack', name: '배낭' } },
   { id: 'defender', name: '성 지킴이', how: '주판 성 지키기 한 판에서 몬스터 서른 마리를 무찔렀어요', item: { id: 'helmet', name: '투구' } },
+  { id: 'hero', name: '성의 영웅', how: '주판 성 지키기에서 마지막 레벨을 깨고 다섯 번째 주판알을 되찾았어요', item: { id: 'sword', name: '주판 검' } },
   { id: 'mind', name: '머릿속 주판', how: '암산 하늘에서 한 판 여덟 문제 중 여섯 개 넘게 맞혔어요', item: { id: 'goggles', name: '고글' } },
 ];
 
@@ -40,6 +42,7 @@ export function earnedBadges(rounds) {
       if (r.finished && r.results.length >= 8 && r.results.every((x) => x.firstTry)) got.add('perfect');
     }
     if (lesson === 'defense' && r.results.length >= 30) got.add('defender');
+    if (lesson === 'defense' && r.defense?.level > LEVELS.length) got.add('hero');
     if (lesson === 'mul-0' && r.finished && r.results.filter((x) => x.firstTry).length >= 19) got.add('tt-master');
     if (FOREST.includes(lesson) && r.finished) forestDone.add(lesson);
     if (lesson.startsWith('mental-') && r.finished && r.results.filter((x) => x.correct).length >= 6) got.add('mind');

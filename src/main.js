@@ -42,8 +42,8 @@ try {
   // 글꼴을 못 불러오면 기본 글꼴로 보인다
 }
 
-const BADGE_ICON = { defender: '🛡️', 'first-round': '🧱', 'zero-pad': '0️⃣', friend: '🤝', 'zero-zero': '⭕', bonus: '🚀', perfect: '👑', 'tt-master': '🧮', forest: '🌲', mind: '🧠' };
-const ITEM_ICON = { helmet: '⛑️', hat: '🎩', glasses: '🕶️', tie: '👔', bowtie: '🎀', cape: '🦸', crown: '👑', scarf: '🧣', backpack: '🎒', goggles: '🥽' };
+const BADGE_ICON = { hero: '🏅', defender: '🛡️', 'first-round': '🧱', 'zero-pad': '0️⃣', friend: '🤝', 'zero-zero': '⭕', bonus: '🚀', perfect: '👑', 'tt-master': '🧮', forest: '🌲', mind: '🧠' };
+const ITEM_ICON = { sword: '🗡️', helmet: '⛑️', hat: '🎩', glasses: '🕶️', tie: '👔', bowtie: '🎀', cape: '🦸', crown: '👑', scarf: '🧣', backpack: '🎒', goggles: '🥽' };
 const FLASH_SPEEDS = [
   { ms: 1500, label: '🐢 느리게' },
   { ms: 1000, label: '🚶 보통' },

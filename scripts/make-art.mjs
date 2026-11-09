@@ -28,7 +28,8 @@ function collect(dir, kind) {
     .filter((f) => MIME[extname(f).toLowerCase()])
     .map((f) => {
       const name = f.slice(0, -extname(f).length);
-      const k = kind === 'background' && name === 'castle' ? 'cutout' : kind;
+      // 성과 이야기 그림 A1·A3·A4는 바탕을 지워 오려 내고, 이야기 그림 A2·A5는 배경처럼 다듬는다
+      const k = kind === 'story' ? (['A2', 'A5'].includes(name) ? 'background' : 'cutout') : kind === 'background' && name === 'castle' ? 'cutout' : kind;
       return { name, kind: k, flip: FLIP.has(name), soft: SOFT.has(name), url: `data:${MIME[extname(f).toLowerCase()]};base64,${readFileSync(join(abs, f)).toString('base64')}` };
     });
 }
@@ -234,6 +235,7 @@ function findBrowser() {
 const groups = [
   { jobs: collect('assets/monsters', 'monster'), out: 'src/content/monsters' },
   { jobs: collect('assets/backgrounds', 'background'), out: 'src/content/backgrounds' },
+  { jobs: collect('assets/story', 'story'), out: 'src/content/story' },
 ];
 const browser = findBrowser();
 for (const { jobs, out } of groups) {

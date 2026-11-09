@@ -122,6 +122,13 @@ export function createTeacher(root, look, { unit = 6 } = {}) {
     [[3, 2.4, 1], [2.2, bodyTop - 1.5, bodyFront], '#ff4fa3'],
     [[1.4, 1.4, 1.2], [0, bodyTop - 1.5, bodyFront + 0.1], '#c9186f'],
   ]);
+  // 주판 검(배지 "성의 영웅"): 오른손에 든 칼. 칼날에 주판알 다섯 개
+  item('sword', armR, [
+    [[1.4, 16, 1.4], [0, -armH - 8, armD / 2 + 1], '#d7dde3'],
+    [[5, 1.4, 2], [0, -armH - 0.5, armD / 2 + 1], '#f2c230'],
+    [[1.6, 3, 1.6], [0, -armH + 1.5, armD / 2 + 1], '#7a4b22'],
+    ...[0, 1, 2, 3, 4].map((i) => [[2.2, 1.6, 2.2], [0, -armH - 4 - i * 2.6, armD / 2 + 1], '#e63946']),
+  ]);
   item('helmet', head, [
     [[headW + 1.2, 4, headD + 1.2], [0, headH - 1, 0], '#9aa0a6'],
     [[1.2, 3, 2], [0, headH + 1.5, 0], '#d62828'],

@@ -1,0 +1,131 @@
+{
+  "_설명": "성 지키기 이야기 '이로와 빛의 주판알'(docs/story.md). 장면 → 그림(panel) 여러 장 → 대사. 그림 한 장은 이미 있는 그림(배경 bg 1~5, 성, 몬스터)을 겹쳐 만들고, 새 그림(art: A1~A5, src/content/story/)이 있으면 그것을 쓴다. 없으면 effect로 대신한다. motion: zoom(천천히 다가감), pan(옆으로 흐름). 대사의 {defeated}는 그 판에서 무찌른 몬스터 수다.",
+  "scenes": {
+    "prologue": {
+      "title": "프롤로그: 빛의 주판알",
+      "music": 1,
+      "panels": [
+        {
+          "bg": 1, "castle": "center", "art": "A1", "effect": "abacus-glow", "motion": "zoom",
+          "lines": [
+            "옛날 옛날, 숫자 나라에 주판 성이 있었어요. 성 꼭대기의 큰 주판에는 빛나는 주판알 다섯 개가 있었어요.",
+            "이 주판알 덕분에 세상의 숫자가 늘 바르게 지켜졌어요."
+          ]
+        },
+        {
+          "bg": 2, "night": true, "castle": "far", "art": "A2", "effect": "thief", "motion": "pan",
+          "lines": [
+            "그런데 어느 밤, 마왕이 주판알 다섯 개를 몽땅 훔쳐 갔어요.",
+            "그날부터 숫자가 뒤죽박죽이 됐어요. 사과 세 개가 일곱 개로 보이고, 시계는 열세 시를 가리켰어요."
+          ]
+        },
+        {
+          "bg": 1, "castle": "left", "teacher": true, "motion": "zoom",
+          "lines": [
+            "이로야, 성을 지켜 줄 주판 기사가 필요해요.",
+            "몬스터 머리 위의 문제를 풀면 몬스터를 무찌를 수 있어요. 실물 주판으로 천천히 풀어도 돼요."
+          ]
+        },
+        {
+          "bg": 1, "castle": "walk", "monsters": ["slime", "bat"], "motion": "pan",
+          "lines": [
+            "주판 성이 마왕의 화산을 향해 길을 떠나요. 몬스터 열 마리를 무찌를 때마다 성이 한 걸음씩 나아가요.",
+            "자, 출발해요!"
+          ]
+        }
+      ]
+    },
+    "interlude-1": {
+      "title": "해 질 녘 들판으로",
+      "music": 2,
+      "panels": [
+        {
+          "bg": 1, "castle": "left", "art": "A3", "effect": "bead", "beads": 1, "motion": "zoom",
+          "lines": ["풀밭 끝 덤불 속에서 첫 번째 주판알을 찾았어요! 이로가 슬라임과 버섯을 계산으로 물리친 덕분이에요."]
+        },
+        {
+          "bg": 2, "castle": "left", "monsters": ["raven", "zombie"], "beads": 1, "motion": "pan",
+          "lines": [
+            "해가 지기 시작해요. 하늘에서 큰까마귀가 날아오니 위도 잘 봐요.",
+            "좀비는 느릿느릿 걷지만 포기하지 않아요. 우리도 포기하지 말아요."
+          ]
+        }
+      ]
+    },
+    "interlude-2": {
+      "title": "메마른 땅으로",
+      "music": 3,
+      "panels": [
+        {
+          "bg": 2, "castle": "left", "art": "A3", "effect": "bead", "beads": 2, "motion": "zoom",
+          "lines": ["두 번째 주판알이에요! 5의 짝도, 친구수도 척척 해냈어요."]
+        },
+        {
+          "bg": 3, "castle": "left", "monsters": ["skeleton", "ghost"], "beads": 2, "motion": "pan",
+          "lines": [
+            "이 메마른 땅은 원래 숫자 꽃이 피던 들판이었대요. 주판알이 사라져서 꽃이 다 시들었어요.",
+            "해골들이 달그락달그락 다가와요. 계산으로 꽃밭을 되찾아 줘요."
+          ]
+        }
+      ]
+    },
+    "interlude-3": {
+      "title": "어둠 동굴로",
+      "music": 4,
+      "panels": [
+        {
+          "bg": 3, "castle": "left", "art": "A3", "effect": "bead-flowers", "beads": 3, "motion": "zoom",
+          "lines": ["세 번째 주판알을 찾자 시든 꽃이 다시 피어났어요!"]
+        },
+        {
+          "bg": 4, "castle": "left", "monsters": ["knight", "golem"], "beads": 3, "motion": "pan",
+          "lines": [
+            "이제 땅속 동굴로 들어가요. 동굴 수정은 이로가 문제를 풀 때마다 더 밝게 빛난대요.",
+            "검은 기사는 두 자리 수 다섯 줄을 들고 와요. 한 줄씩 차근차근 넣어 봐요."
+          ]
+        }
+      ]
+    },
+    "interlude-4": {
+      "title": "용암 땅으로",
+      "music": 5,
+      "panels": [
+        {
+          "bg": 4, "castle": "left", "art": "A3", "effect": "bead", "beads": 4, "motion": "zoom",
+          "lines": ["네 번째 주판알이에요! 이제 하나만 남았어요."]
+        },
+        {
+          "bg": 5, "castle": "left", "monsters": ["dragon", "giant", "gargoyle"], "beads": 4, "motion": "pan",
+          "lines": [
+            "저기 화산이 보여요. 마지막 주판알은 마왕이 꼭 쥐고 있대요.",
+            "몬스터가 아주 세졌어요. 그래도 이로는 여기까지 계산으로 왔어요. 할 수 있어요."
+          ]
+        }
+      ]
+    },
+    "ending": {
+      "title": "엔딩: 다시 반짝이는 숫자",
+      "music": 5,
+      "panels": [
+        {
+          "bg": 5, "castle": "left", "boss": "big", "beads": 4, "motion": "zoom",
+          "lines": ["마왕이 나타났어요! 그런데 이로의 계산이 맞을 때마다 마왕의 보라 기운이 조금씩 사라져요."]
+        },
+        {
+          "bg": 5, "castle": "left", "art": "A4", "boss": "small", "effect": "bead", "beads": 5, "motion": "zoom",
+          "lines": [
+            "마왕이 다섯 번째 주판알을 내밀며 말했어요. \"사실 나는 계산을 못 해서 숫자가 미웠어.\"",
+            "이로가 말했어요. \"그럼 같이 배우자. 주판으로 하면 쉬워!\""
+          ]
+        },
+        {
+          "bg": 1, "castle": "center", "art": "A5", "effect": "fireworks", "beads": 5, "music": 1, "motion": "zoom",
+          "lines": [
+            "주판알 다섯 개가 제자리로 돌아오자 세상의 숫자가 다시 반짝였어요.",
+            "이로는 이번 판에서 몬스터 {defeated}마리를 계산으로 무찔렀어요. 마지막까지 성을 지켜 낸 주판 기사예요!"
+          ]
+        }
+      ]
+    }
+  }
+}

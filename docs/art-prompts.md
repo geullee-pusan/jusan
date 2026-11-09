@@ -93,3 +93,19 @@
 | `bgm-3.mp3` | 메마른 땅(7~9) | Instrumental, desert fantasy, dry plucked strings and hand drums, low drone, dusty and tense, tempo around 112 BPM, seamless loop, no vocals, background music for a children's game |
 | `bgm-4.mp3` | 어둠 동굴(10~12) | Instrumental, dark cave ambience with steady pulse, deep cello ostinato, echoing chimes like crystals, distant drips, suspenseful but not scary, tempo around 118 BPM, seamless loop, no vocals, background music for a children's game |
 | `bgm-5.mp3` | 용암 땅(13~) | Instrumental, epic final battle, driving orchestral strings, heavy taiko drums, brass stabs, urgent and heroic, tempo around 130 BPM, seamless loop, no vocals, not too loud, background music for a children's game |
+
+## 이야기 장면 그림 (2026-11-10, docs/story.md)
+
+없어도 이야기는 돌아간다(효과로 대신한다). 있으면 `src/content/story/A1.webp`~`A5.webp`로 넣는다. 원본은 `assets/story/`에 둔다.
+A1·A3·A4는 투명 바탕(또는 흰 바탕)으로, 가운데에 겹친다. A2·A5는 가로로 긴 장면 전체(21:9 또는 16:9)다.
+
+공통 문장(모든 그림 뒤에 붙인다):
+> Semi-realistic fantasy illustration, highly detailed digital painting with realistic textures and lighting, same style as a children's fantasy game. Suitable for a 9-year-old: no blood, no gore, not too scary. Original design, not based on any existing game, movie or book. No text, no logo, no frame.
+
+| 파일 | 장면 | 프롬프트 |
+|---|---|---|
+| `A1` | 프롤로그 1 | A large ornate wooden abacus mounted on a stone frame, with exactly five big glowing golden beads shining warm light, magical sparkles around them, isolated on a transparent background (or plain pure white). Square 1024x1024. |
+| `A2` | 프롤로그 2 | Night sky over a quiet meadow, a dark horned demon king silhouette flying away across the moon carrying five glowing golden beads that leave a trail of light, a small stone castle with a tower far away below, stars, mysterious blue night. Wide landscape 21:9. |
+| `A3` | 사이 장면 | A single large glowing golden abacus bead, round and slightly flattened like a real abacus bead, radiating warm light and tiny sparkles, isolated on a transparent background (or plain pure white). Square 1024x1024. |
+| `A4` | 엔딩 2 | A small, tired demon king in dark purple armor with a crooked golden crown, his dark aura gone, looking a bit embarrassed and funny, holding out one glowing golden abacus bead with both hands, side view facing left, full body, isolated on a transparent background (or plain pure white). Square 1024x1024. |
+| `A5` | 엔딩 3 | A sunny green meadow with a stone castle with one round tower, a big abacus on top of the castle with five glowing golden beads, colorful fireworks in the blue sky shaped like numbers 1 to 5, joyful celebration atmosphere. Wide landscape 21:9. |

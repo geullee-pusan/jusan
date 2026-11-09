@@ -446,3 +446,67 @@ button[aria-pressed='true'] { filter: brightness(.85); }
   55% { transform: translateX(-3px); filter: none; }
   100% { transform: translateX(0); }
 }
+
+/* ---- 성 지키기 이야기 장면(src/ui/story-view.js) ---- */
+.story { position: fixed; inset: 0; z-index: 200; background: #000; overflow: hidden; }
+.story-stage { position: absolute; inset: 0; overflow: hidden; }
+.story-layer { position: absolute; inset: -4%; background: #222 center bottom / cover no-repeat; }
+.story-layer.motion-zoom { animation: story-zoom 16s ease-out forwards; }
+.story-layer.motion-pan { animation: story-pan 18s ease-in-out forwards; }
+@keyframes story-zoom { from { transform: scale(1); } to { transform: scale(1.1); } }
+@keyframes story-pan { from { transform: translateX(2%) scale(1.06); } to { transform: translateX(-2%) scale(1.06); } }
+.story-layer.night::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(10, 10, 50, .78), rgba(20, 10, 40, .6)); pointer-events: none; }
+.story-layer > * { position: absolute; z-index: 1; }
+/* 성 */
+/* 땅에 선 것들은 자막 위(아래에서 24%)에 세운다 */
+.s-castle { bottom: 24%; filter: drop-shadow(6px 8px 8px rgba(0, 0, 0, .5)); }
+.s-castle.at-center { left: 50%; width: 22%; transform: translateX(-50%); }
+.s-castle.at-left { left: 6%; width: 16%; }
+.s-castle.at-far { left: 12%; bottom: 30%; width: 7%; filter: brightness(.4); }
+.s-castle.at-walk { left: 8%; width: 16%; animation: castle-walk 3s ease-in-out infinite alternate; }
+@keyframes castle-walk { 0% { transform: translateX(0) rotate(-1.5deg); } 50% { transform: translateX(6%) translateY(-8px) rotate(1.5deg); } 100% { transform: translateX(12%) rotate(-1.5deg); } }
+/* 몬스터·마왕 */
+.s-mon { bottom: calc(24% + var(--i) * 3%); right: calc(8% + var(--i) * 15%); width: 13%; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .45)); animation: art-walk 1s ease-in-out infinite alternate; }
+.s-mon.fly { bottom: auto; top: calc(18% + var(--i) * 6%); animation-name: art-fly; }
+.s-boss { filter: drop-shadow(0 0 18px rgba(170, 80, 255, .9)); }
+.s-boss.big { right: 8%; bottom: 22%; width: 30%; animation: act-summon 2.4s ease-in-out infinite; }
+.s-boss.small { right: 30%; bottom: 24%; width: 13%; filter: drop-shadow(0 0 4px rgba(170, 80, 255, .5)); }
+.s-art { left: 50%; top: 50%; transform: translate(-50%, -55%); max-width: 46%; max-height: 62%; filter: drop-shadow(0 0 24px rgba(255, 230, 140, .6)); }
+/* 효과: 빛나는 주판(성 꼭대기) */
+.s-abacus { left: 50%; bottom: 52%; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px 10px; border: 3px solid #5a3a1a; border-radius: 6px; background: rgba(60, 35, 15, .7); }
+.s-abacus i, .s-beads-fly i, .s-bead i, .story-beads i { display: block; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fffbe0, #ffd84a 45%, #e09a00); box-shadow: 0 0 12px 4px rgba(255, 210, 60, .8); }
+.s-abacus i { width: 26px; height: 18px; animation: bead-glow 1.6s ease-in-out infinite alternate; }
+@keyframes bead-glow { to { box-shadow: 0 0 22px 8px rgba(255, 220, 80, 1); } }
+/* 효과: 주판알을 들고 날아가는 마왕 그림자 */
+.s-thief { right: 10%; top: 12%; width: 18%; animation: thief-fly 9s linear forwards; }
+.s-thief img { width: 100%; filter: brightness(0) drop-shadow(0 0 10px rgba(150, 60, 220, .9)); }
+.s-beads-fly { position: absolute; left: -10%; bottom: 10%; display: flex; gap: 4px; }
+.s-beads-fly i { width: 14px; height: 14px; }
+@keyframes thief-fly { from { transform: translate(0, 0) scale(1); } to { transform: translate(40%, -30%) scale(.6); opacity: .7; } }
+.s-stars { inset: 0; background: radial-gradient(2px 2px at 10% 20%, #fff, transparent), radial-gradient(2px 2px at 30% 8%, #fff, transparent), radial-gradient(1.5px 1.5px at 55% 25%, #fff, transparent), radial-gradient(2px 2px at 75% 12%, #fff, transparent), radial-gradient(1.5px 1.5px at 90% 30%, #fff, transparent); z-index: 2; }
+/* 효과: 빛의 주판알 하나 */
+.s-bead { left: 50%; top: 32%; transform: translate(-50%, -50%); animation: bead-rise 2.4s ease-out forwards; }
+.s-bead i { width: 90px; height: 64px; animation: bead-glow 1.2s ease-in-out infinite alternate; }
+@keyframes bead-rise { from { transform: translate(-50%, 40%) scale(.3); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+.s-flowers { left: 0; right: 0; bottom: 24%; display: flex; justify-content: space-around; font-size: 2.4em; }
+.s-flowers span { animation: flower-grow 1.2s ease-out both; animation-delay: calc(var(--i) * .25s + .6s); }
+@keyframes flower-grow { from { transform: scale(0) translateY(30px); } to { transform: scale(1); } }
+/* 효과: 엔딩 불꽃과 숫자 */
+.s-fireworks i { position: absolute; left: calc(12% + var(--i) * 18%); top: calc(10% + (var(--i) * 7%) % 20%); width: 8px; height: 8px; border-radius: 50%; color: hsl(calc(var(--i) * 70), 90%, 65%);
+  box-shadow: 0 -40px 0 currentColor, 28px -28px 0 currentColor, 40px 0 0 currentColor, 28px 28px 0 currentColor, 0 40px 0 currentColor, -28px 28px 0 currentColor, -40px 0 0 currentColor, -28px -28px 0 currentColor;
+  animation: firework 1.8s ease-out infinite; animation-delay: calc(var(--i) * .35s); }
+@keyframes firework { from { transform: scale(.1); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+.s-numbers { left: 0; right: 0; top: 8%; display: flex; justify-content: space-around; font-size: 2.6em; font-weight: 700; color: #ffe066; text-shadow: 0 0 12px rgba(255, 200, 40, .9), 2px 2px 0 #222; }
+.s-numbers span { animation: num-float 2.6s ease-in-out infinite alternate; animation-delay: calc(var(--i) * .3s); }
+@keyframes num-float { from { transform: translateY(0); } to { transform: translateY(-18px); } }
+/* 되찾은 주판알, 선생님, 자막, 단추 */
+.story-beads { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; padding: 8px 14px; border-radius: 30px; background: rgba(0, 0, 0, .45); z-index: 3; }
+.story-beads i { width: 30px; height: 21px; }
+.story-beads i:not(.on) { background: rgba(255, 255, 255, .15); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5); }
+.story-teacher { position: absolute; left: 3%; bottom: 230px; z-index: 3; }
+.story-caption { position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%); width: min(820px, 92%); z-index: 3; font-size: 1.15em; line-height: 1.6; }
+.story-caption p { margin: 4px 0 0; min-height: 3.2em; }
+.story-title { font-size: .85em; color: #8a5a00; }
+.story-controls { position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; gap: 14px; z-index: 3; }
+.story-controls [data-s=next].ready { animation: bob 1.2s ease-in-out infinite; }
+.def-story { margin: 10px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
