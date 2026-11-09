@@ -242,7 +242,7 @@ button[aria-pressed='true'] { filter: brightness(.85); }
   animation: lava-glow 2.4s ease-in-out infinite; }
 @keyframes lava-glow { 50% { filter: brightness(1.15) saturate(1.2); } }
 .def-field[data-stage="4"] .bubble, .def-field[data-stage="5"] .bubble { border-color: #ffd23f; }
-.def-levelup { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); z-index: 6; text-align: center; white-space: nowrap;
+.def-levelup { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); z-index: 41; text-align: center; white-space: nowrap;
   background: var(--gold); color: #3a2a00; border: 3px solid #222; box-shadow: 0 4px 0 #222; padding: 8px 18px; font-size: 1.8em; pointer-events: none; }
 .def-levelup small { display: block; font-size: .5em; line-height: 1.6; }
 .def-levelup.show { animation: lvpop .5s ease-out; }
@@ -250,13 +250,13 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 .def-lv { background: var(--gold); color: #3a2a00; text-shadow: none; border: 3px solid #222; padding: 0 8px; }
 .def-reach { font-size: 2.2em; margin: 4px 0; }
 .def-field.quake { animation: shake .35s; }
-.def-castle { position: absolute; left: 0; top: 0; bottom: 0; width: 70px; z-index: 3;
+.def-castle { position: absolute; left: 0; top: 0; bottom: 0; width: 70px; z-index: 30;
   background: repeating-linear-gradient(0deg, #9aa0a6 0 22px, #7d848a 22px 24px), #9aa0a6; border-right: 4px solid #222; }
 .def-castle::before { content: ''; position: absolute; left: 0; right: 0; top: -2px; height: 16px; background: repeating-linear-gradient(90deg, #222 0 12px, transparent 12px 24px); }
 .def-castle.hurt { filter: sepia(.4) brightness(.9); }
 .def-flag { position: absolute; top: 18px; left: 18px; font-size: 1.8em; }
 .def-lane { position: absolute; left: 74px; right: 0; top: calc(var(--lane) * 33.3%); height: 33.3%; }
-.enemy { position: absolute; bottom: 6px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; transition: left .1s linear; z-index: 2; }
+.enemy { position: absolute; bottom: 6px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; transition: left .1s linear; z-index: calc(10 + var(--lane, 0) * 2); }
 .enemy.boom { animation: boom .45s ease-out forwards; }
 @keyframes boom { to { transform: translateX(-50%) scale(1.6) rotate(25deg); opacity: 0; } }
 .bubble { background: rgba(20, 20, 30, .9); color: #fff; border: 2px solid #fff; padding: 2px 8px; margin-bottom: 4px; font-size: .95em; line-height: 1.15; white-space: nowrap; }
@@ -315,7 +315,7 @@ button[aria-pressed='true'] { filter: brightness(.85); }
   background: #ffd23f; clip-path: polygon(0 100%, 0 20%, 20% 60%, 35% 0, 50% 55%, 65% 0, 80% 60%, 100% 20%, 100% 100%); }
 .mon-mini { display: inline-block; width: 30px; height: 30px; vertical-align: middle; position: relative; }
 .mon-mini .mon { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%) scale(.4); transform-origin: bottom center; margin: 0; animation: none; }
-.def-paused { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; background: rgba(0,0,0,.45); color: #fff; font-size: 2em; z-index: 5; }
+.def-paused { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; background: rgba(0,0,0,.45); color: #fff; font-size: 2em; z-index: 40; }
 .def-answer { margin-top: 10px; }
 #def-show.nope { animation: shake .35s; color: #c0392b; }
 .def-result { text-align: center; }
@@ -349,3 +349,13 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 /* 밝은 땅(풀밭, 메마른 땅)에서는 몬스터 둘레를 살짝 어둡게 해 땅과 섞이지 않게 한다 */
 .def-field.has-bg[data-stage="1"] .mon.art img,
 .def-field.has-bg[data-stage="3"] .mon.art img { filter: drop-shadow(0 0 1.5px rgba(30, 20, 10, .7)); }
+
+/* 성 그림: 땅 위에 서 있고, 몬스터는 성벽 앞까지 온다 */
+.def-castle.art { top: auto; bottom: 1%; width: 150px; background: none; border: 0; }
+.def-castle.art::before, .def-castle.art .def-flag { display: none; }
+.def-castle.art img { display: block; width: 100%; filter: drop-shadow(5px 6px 6px rgba(0, 0, 0, .45)); }
+.def-castle.art.hurt img { filter: drop-shadow(5px 6px 6px rgba(0, 0, 0, .45)) sepia(.35) brightness(.85); }
+.def-field.castle-art .def-lane { left: 128px; }
+
+/* 엄폐물: 배경 그림의 그 부분만 오려 몬스터 위에 겹친다(뒷줄 몬스터를 가린다) */
+.def-cover { position: absolute; background-size: 100% 100%; background-repeat: no-repeat; pointer-events: none; }

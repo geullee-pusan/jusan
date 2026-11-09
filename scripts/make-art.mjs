@@ -14,7 +14,7 @@ import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SIZE = { monster: 288, background: 1600 };
+const SIZE = { monster: 288, castle: 520, background: 1600 };
 /** 오른쪽을 보고 그려진 몬스터(뒤집는다) */
 const FLIP = new Set(['skeleton']);
 /** 몸이 비치거나 연기에 싸인 몬스터: 흰 바탕을 잘라 내지 않고, 흰 만큼 투명하게 한다(연기처럼 흐려지는 끝을 살린다) */
@@ -201,7 +201,7 @@ function run() {
     cut.width = b.w + pad * 2;
     cut.height = b.h + pad * 2;
     cut.getContext('2d').drawImage(c, b.x, b.y, b.w, b.h, pad, pad, b.w, b.h);
-    const scale = Math.min(1, SIZE.monster / Math.max(cut.width, cut.height));
+    const scale = Math.min(1, (job.kind === 'cutout' ? SIZE.castle : SIZE.monster) / Math.max(cut.width, cut.height));
     const out = shrink(cut, Math.round(cut.width * scale), Math.round(cut.height * scale));
     result[job.name] = { url: out.toDataURL('image/webp', 0.86), w: out.width, h: out.height };
   }

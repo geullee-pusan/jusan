@@ -19,12 +19,36 @@ const BACKDROPS = import.meta.glob('../content/backgrounds/bg-*.webp', { eager: 
  * 땅에서 걷는 몬스터는 이 아래 땅에만 선다(부모 결정, 2026-11-10). 지평선보다 조금 아래로 잡는다.
  * 새 배경 그림을 넣으면 그림을 보고 여기에 더한다. 없으면 GROUND_DEFAULT를 쓴다.
  */
-const GROUND = { 1: 60, 2: 50, 3: 40, 4: 62 };
+const GROUND = { 1: 60, 2: 50, 3: 40, 4: 62, 5: 62 };
 const GROUND_DEFAULT = 55;
+/**
+ * 엄폐물(바위, 덤불, 종유석 등). 몬스터가 그 뒤를 지나가 엄폐물 뒤에서 나오는 것처럼 보인다(부모 결정, 2026-11-10).
+ * 배경을 실감 나게 하려는 것뿐이다. 몬스터는 늘 오른쪽 끝에서 같은 빠르기로 오고, 난이도는 바뀌지 않는다.
+ * 배경 그림 좌표(그림 크기 W×H)로 테두리를 따 두고, 같은 그림을 그 모양으로 오려 몬스터 위에 겹친다.
+ * lane: 이 엄폐물 바로 뒤에 서는 줄(엄폐물 밑동이 그 줄의 발 높이와 맞는 것). 그보다 앞줄 몬스터는 엄폐물 앞으로 지나간다.
+ * 새 배경을 넣으면 그림을 보고 여기에 더한다. 멀리 있는 덤불처럼 어느 줄보다 뒤에 있는 것은 넣지 않는다.
+ */
+const COVERS = {
+  3: {
+    W: 922, H: 434, list: [
+      { lane: 0, poly: [[748, 262], [756, 222], [774, 200], [796, 190], [818, 198], [834, 214], [848, 206], [872, 200], [900, 204], [922, 210], [922, 278], [790, 272]] },
+      { lane: 2, poly: [[838, 434], [846, 384], [860, 346], [880, 326], [902, 330], [922, 336], [922, 434]] },
+    ],
+  },
+  4: {
+    W: 922, H: 434, list: [
+      { lane: 0, poly: [[758, 326], [764, 300], [778, 289], [802, 284], [830, 289], [860, 282], [890, 279], [922, 285], [922, 332]] },
+      { lane: 2, poly: [[856, 434], [864, 398], [874, 370], [886, 368], [894, 398], [904, 418], [914, 384], [922, 378], [922, 434]] },
+    ],
+  },
+};
+
+// 성 그림(없으면 회색 블록 성)
+const CASTLE = Object.values(import.meta.glob('../content/backgrounds/castle.webp', { eager: true, import: 'default' }))[0];
 /** 화면에 그리는 너비(px). 셀수록 크다 */
 const ART_WIDTH = { slime: 76, bat: 96, mushroom: 70, spider: 90, zombie: 66, skeleton: 66, ghost: 74, goblin: 70, golem: 100, knight: 80, witch: 80, dragon: 124, giant: 100, lava: 104, boss: 116 };
 /** 날거나 떠 있는 몬스터(땅 그림자를 작게, 위아래로 떠다님) */
-const FLYING = new Set(['bat', 'ghost']);
+const FLYING = new Set(['bat', 'ghost', 'witch']);
 const monHTML = (type) => {
   const src = ART[`../content/monsters/${type}.webp`];
   if (!src) return `<div class="mon ${type}"><i></i></div>`;
@@ -107,6 +131,11 @@ export function createDefense(root, io) {
   // ---- 게임 ----
   let game = null;
   const field = $('#def-field');
+  if (CASTLE) {
+    $('#def-castle').classList.add('art');
+    $('#def-castle').innerHTML = `<img src="${CASTLE}" alt="" draggable="false">`;
+    field.classList.add('castle-art');
+  }
 
   /** 배경 땅을 바꾼다. 그림이 있으면 그림을, 없으면 색으로 그린 땅을 쓴다 */
   function setStage(stage) {
@@ -115,7 +144,34 @@ export function createDefense(root, io) {
     field.classList.toggle('has-bg', Boolean(src));
     field.style.setProperty('--ground', `${GROUND[stage] ?? GROUND_DEFAULT}%`);
     field.style.backgroundImage = src ? `url(${src})` : '';
+    placeCovers();
   }
+
+  /**
+   * 엄폐물 겹그림을 놓는다.
+   * 배경은 들판을 덮도록 키우고 아래에 맞춘다(CSS의 cover + center bottom과 같은 계산).
+   */
+  function placeCovers() {
+    for (const el of field.querySelectorAll('.def-cover')) el.remove();
+    const stage = Number(field.dataset.stage);
+    const src = BACKDROPS[`../content/backgrounds/bg-${stage}.webp`];
+    const info = COVERS[stage];
+    if (!src || !info) return;
+    const fw = field.clientWidth, fh = field.clientHeight;
+    if (!fw || !fh) return;
+    const scale = Math.max(fw / info.W, fh / info.H);
+    const rw = info.W * scale, rh = info.H * scale;
+    const left = (fw - rw) / 2, top = fh - rh;
+    for (const c of info.list) {
+      const el = document.createElement('div');
+      el.className = 'def-cover';
+      el.style.cssText = `left:${left}px;top:${top}px;width:${rw}px;height:${rh}px;background-image:url(${src});z-index:${11 + c.lane * 2};clip-path:polygon(${c.poly.map(([x, y]) => `${(x / info.W) * 100}% ${(y / info.H) * 100}%`).join(',')})`;
+      field.appendChild(el);
+    }
+  }
+  window.addEventListener('resize', () => {
+    if (!root.hidden && field.offsetParent) placeCovers();
+  });
 
   function problemHTML(p) {
     if (p.kind === 'mul') return `<div class="q-mul">${fmt(p.a)} × ${fmt(p.b)}</div>`;
@@ -147,6 +203,7 @@ export function createDefense(root, io) {
     $('#def-setup').hidden = true;
     $('#def-result').hidden = true;
     $('#def-game').hidden = false;
+    placeCovers(); // 화면이 보인 뒤에야 들판 크기를 잴 수 있다
     $('#def-paused').hidden = true;
     root.querySelector('[data-d=pause]').textContent = '⏸️ 멈춤';
     renderHud();
