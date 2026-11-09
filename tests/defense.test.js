@@ -1,7 +1,7 @@
 // 게임 모드 "주판 성 지키기": 레벨이 오를수록 몬스터가 서서히 바뀌고 빨라진다
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ENEMIES, LEVELS, levelAfter, levelInfo, makeEnemy, matchAnswer, MIN_TRAVEL, PER_LEVEL, positionAt, reached, scoreFor, spawnGap, stageOf, STAGES, typesAt } from '../src/core/defense.js';
+import { ENEMIES, LEVELS, levelAfter, levelInfo, makeEnemy, matchAnswer, MIN_GAP, MIN_TRAVEL, PER_LEVEL, positionAt, reached, scoreFor, spawnGap, stageOf, STAGES, typesAt } from '../src/core/defense.js';
 import { SKILLS } from '../src/core/skills.js';
 
 const ORDER = Object.keys(ENEMIES);
@@ -39,7 +39,8 @@ test('레벨이 오르면 몬스터가 서서히 바뀌고(하나 빠지고 하�
   // 레벨표를 넘으면 조금씩 더 빨라지되 너무 빨라지지 않는다
   assert.ok(levelInfo(LEVELS.length + 1).travel < levelInfo(LEVELS.length).travel);
   assert.equal(levelInfo(100).travel, MIN_TRAVEL);
-  assert.equal(spawnGap(1), levelInfo(1).travel / 4);
+  assert.equal(spawnGap(1), levelInfo(1).travel / 6);
+  assert.equal(spawnGap(100), MIN_GAP, '아무리 빨라도 3초보다 자주 나오지 않는다');
 });
 
 test('10마리마다 레벨이 하나 오르고, 시작 레벨에서 센다', () => {

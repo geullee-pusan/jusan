@@ -81,9 +81,12 @@ export function levelAfter(startLevel, defeated) {
   return startLevel + Math.floor(defeated / PER_LEVEL);
 }
 
-/** 다음 몬스터가 나오기까지(초): 성까지 오는 시간의 4분의 1 */
+/** 몬스터가 나오는 가장 짧은 간격(초) */
+export const MIN_GAP = 3;
+
+/** 다음 몬스터가 나오기까지(초): 성까지 오는 시간의 6분의 1, 3초보다 짧지 않게(2026-11-10: 4분의 1에서 줄임) */
 export function spawnGap(level) {
-  return levelInfo(level).travel / 4;
+  return Math.max(MIN_GAP, levelInfo(level).travel / 6);
 }
 
 /** 레벨에 나오는 몬스터 종류(약한 것부터) */
