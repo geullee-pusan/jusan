@@ -336,3 +336,15 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 .mon-mini .mon.art { position: static; transform: none; width: auto; }
 .mon-mini .mon.art img { height: 30px; width: auto; animation: none; }
 .mon-mini .mon.art::after { display: none; }
+
+/* 배경 그림이 있는 땅: 위 4분의 1은 하늘과 먼 산, 세 줄은 그 아래 땅 위. 뒷줄 몬스터는 조금 작게(멀리 있어 보이게) */
+.def-field.has-bg[data-stage] { --veil: transparent; --line: transparent; background-size: cover; background-position: center 40%; background-repeat: no-repeat; animation: none; }
+.def-field.has-bg .def-lane { top: calc(30% + var(--lane) * 23.3%); height: 23.3%; }
+.def-field.has-bg .enemy { transform: translateX(-50%) scale(calc(.78 + var(--lane) * .11)); transform-origin: 50% 100%; }
+/* 어두운 땅(해 질 녘, 동굴, 용암)에서는 몬스터 둘레를 살짝 밝혀 잘 보이게 한다 */
+.def-field.has-bg[data-stage="2"] .mon.art img,
+.def-field.has-bg[data-stage="4"] .mon.art img,
+.def-field.has-bg[data-stage="5"] .mon.art img { filter: drop-shadow(0 0 2px rgba(255, 236, 200, .75)) drop-shadow(0 0 6px rgba(255, 220, 170, .35)); }
+/* 밝은 땅(풀밭, 메마른 땅)에서는 몬스터 둘레를 살짝 어둡게 해 땅과 섞이지 않게 한다 */
+.def-field.has-bg[data-stage="1"] .mon.art img,
+.def-field.has-bg[data-stage="3"] .mon.art img { filter: drop-shadow(0 0 1.5px rgba(30, 20, 10, .7)); }

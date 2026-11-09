@@ -12,6 +12,8 @@ import { sfx } from './sfx.js';
 const fmt = (n) => n.toLocaleString('ko-KR');
 // 몬스터 그림(부모가 만든 그림을 scripts/make-art.mjs로 다듬은 것). 그림이 아직 없는 몬스터는 블록 모양으로 그린다.
 const ART = import.meta.glob('../content/monsters/*.webp', { eager: true, import: 'default' });
+// 배경 그림(레벨 단계마다 하나, bg-1 ~ bg-5)
+const BACKDROPS = import.meta.glob('../content/backgrounds/bg-*.webp', { eager: true, import: 'default' });
 /** 화면에 그리는 너비(px). 셀수록 크다 */
 const ART_WIDTH = { slime: 76, bat: 96, mushroom: 70, spider: 90, zombie: 66, skeleton: 66, ghost: 74, goblin: 70, golem: 100, knight: 80, witch: 80, dragon: 124, giant: 100, lava: 104, boss: 116 };
 /** 날거나 떠 있는 몬스터(땅 그림자를 작게, 위아래로 떠다님) */
@@ -99,6 +101,14 @@ export function createDefense(root, io) {
   let game = null;
   const field = $('#def-field');
 
+  /** 배경 땅을 바꾼다. 그림이 있으면 그림을, 없으면 색으로 그린 땅을 쓴다 */
+  function setStage(stage) {
+    field.dataset.stage = stage;
+    const src = BACKDROPS[`../content/backgrounds/bg-${stage}.webp`];
+    field.classList.toggle('has-bg', Boolean(src));
+    field.style.backgroundImage = src ? `url(${src})` : '';
+  }
+
   function problemHTML(p) {
     if (p.kind === 'mul') return `<div class="q-mul">${fmt(p.a)} × ${fmt(p.b)}</div>`;
     return `<div class="q-rows">${p.rows.map((r, i) => `<span>${i === 0 ? '' : r < 0 ? '−' : '+'}</span><span>${fmt(Math.abs(r))}</span>`).join('')}</div>`;
@@ -124,7 +134,7 @@ export function createDefense(root, io) {
       over: false,
     };
     for (const lane of root.querySelectorAll('.def-lane')) lane.innerHTML = '';
-    field.dataset.stage = stageOf(game.level);
+    setStage(stageOf(game.level));
     $('#def-levelup').hidden = true;
     $('#def-setup').hidden = true;
     $('#def-result').hidden = true;
@@ -216,7 +226,7 @@ export function createDefense(root, io) {
     game.level = level;
     sfx('badge');
     const stage = stageOf(level);
-    field.dataset.stage = stage;
+    setStage(stage);
     const box = $('#def-levelup');
     const newTypes = typesAt(level).filter((t) => !typesAt(level - 1).includes(t));
     const where = stage !== stageBefore ? `${STAGES[stage - 1]}에 왔어요. ` : '';

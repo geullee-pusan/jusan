@@ -180,7 +180,14 @@ function run() {
     }
     x.drawImage(img, 0, 0);
     if (job.kind === 'background') {
-      const out = shrink(c, Math.min(SIZE.background, w), Math.round(h * Math.min(SIZE.background, w) / w));
+      // 오른쪽 아래에 이미지 도구의 반짝이 표시가 찍혀 나온다. 오른쪽 끝 10%를 잘라 낸다
+      const cw = Math.round(w * 0.9);
+      const crop = document.createElement('canvas');
+      crop.width = cw;
+      crop.height = h;
+      crop.getContext('2d').drawImage(c, 0, 0, cw, h, 0, 0, cw, h);
+      const tw = Math.min(SIZE.background, cw);
+      const out = shrink(crop, tw, Math.round(h * tw / cw));
       result[job.name] = { url: out.toDataURL('image/webp', 0.8), w: out.width, h: out.height };
       continue;
     }
