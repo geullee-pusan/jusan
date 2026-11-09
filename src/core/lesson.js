@@ -15,9 +15,9 @@ import { readNumber } from './numread.js';
 import { hasBatchim, placeName } from './korean.js';
 import { createRng, seedFrom } from './rng.js';
 
-const COUNT = ['', '한', '두', '세', '네', '다섯', '여섯'];
+export const COUNT = ['', '한', '두', '세', '네', '다섯', '여섯'];
 /** 차례: "이번"처럼 다른 뜻으로 들리지 않게 "두 번째"로 읽는다 */
-const ORDINAL = ['', '첫 번째', '두 번째', '세 번째', '네 번째'];
+export const ORDINAL = ['', '첫 번째', '두 번째', '세 번째', '네 번째'];
 
 /** 숫자 칸 읽기: 8 → "팔", 0 → "영" */
 const read = (n) => readNumber(n);
@@ -37,7 +37,7 @@ export function fill(template, vars) {
   });
 }
 
-function line(script, key, seed, vars = {}, pose = 'talk') {
+export function line(script, key, seed, vars = {}, pose = 'talk') {
   const list = script.lines[key];
   if (!list) throw new Error(`대사가 없어요: ${key}`);
   const pick = list[Math.floor(createRng(seedFrom(key, seed))() * list.length)];

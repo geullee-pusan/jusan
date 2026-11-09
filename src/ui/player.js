@@ -55,6 +55,7 @@ export function createPlayer(ctx) {
         case 'abacus-steps':
           teacher.pose('demo');
           await abacus.play(scene.steps, { stepMs: 700 / slow });
+          abacus.glowPair(scene.tensPlace, scene.onesPlace); // 곱 두 칸이 잠깐 빛난다(0 붙이기도 눈에 보이게)
           teacher.pose('idle');
           break;
         case 'wait': {

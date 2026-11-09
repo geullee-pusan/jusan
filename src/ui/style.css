@@ -63,19 +63,6 @@ button[aria-pressed='true'] { background: #ffe9a8; }
 .board-no { opacity: .7; min-width: 1.6em; }
 .board-mark { margin-left: auto; }
 
-.abacus { background: #2b2b2b; border-radius: 14px; padding: 10px 14px 6px; }
-.abacus.shake { animation: shake .35s; }
-@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-.abacus-frame { position: relative; display: grid; grid-template-columns: repeat(var(--cols), 1fr); height: 214px; background: #f4e7cf; border: 8px solid #111; border-radius: 6px; }
-.abacus-frame::before { content: ''; position: absolute; left: 0; right: 0; top: 59px; height: 8px; background: #fff; border-top: 1px solid #999; border-bottom: 1px solid #999; z-index: 2; }
-.abacus-col { position: relative; border-radius: 6px; transition: background .2s; }
-.abacus-col.hl-now { background: rgba(13, 105, 172, .18); }
-.abacus-col.hl-start { background: rgba(245, 205, 48, .35); }
-.abacus-rod { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: #8a5a2b; }
-.abacus-bead { position: absolute; left: 50%; top: 0; width: 64%; max-width: 54px; height: 24px; margin-left: min(-32%, -27px); border-radius: 50% / 50%; background: var(--bead, #8a5a2b); background-image: radial-gradient(ellipse at 38% 30%, rgba(255, 255, 255, .65), rgba(255, 255, 255, 0) 45%), linear-gradient(rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .28)); border: 1px solid rgba(0, 0, 0, .35); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); transition: transform .3s ease; z-index: 3; }
-.abacus-dot { position: absolute; left: 50%; top: 61px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: #222; z-index: 4; }
-.abacus-dot.hidden { display: none; }
-.abacus-labels { display: grid; grid-template-columns: repeat(var(--cols), 1fr); text-align: center; color: #fff; font-weight: 700; padding-top: 4px; }
 
 .answer { position: fixed; right: 16px; bottom: 90px; width: min(360px, calc(100vw - 32px)); box-shadow: 0 8px 30px rgba(0, 0, 0, .25); z-index: 10; }
 .answer-head { display: flex; justify-content: space-between; gap: 8px; font-size: .9em; }
@@ -84,3 +71,33 @@ button[aria-pressed='true'] { background: #ffe9a8; }
 .board-list li span { white-space: nowrap; }
 .lesson .teacher-stage { inset: 0 0 96px 0; }
 .lesson .caption { min-height: 76px; display: flex; align-items: center; }
+
+/* ---- 화면 주판: 아이의 실물 주판(17줄, 검은 틀, 흰 가름대, 팽이 모양 알) ---- */
+.abacus { background: #0d0d0d; border-radius: 18px; padding: 10px 12px 6px; box-shadow: inset 0 0 0 3px #2a2a2a, 0 6px 0 #000; }
+.abacus.shake { animation: shake .35s; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.abacus-frame { position: relative; display: grid; grid-template-columns: repeat(17, 1fr); background: #050505; border-radius: 6px; overflow: hidden; }
+.abacus-beam { position: absolute; left: 0; right: 0; background: linear-gradient(#ffffff, #e9e9e9); z-index: 2; box-shadow: 0 1px 0 #999; }
+.abacus-dot { position: absolute; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: #111; }
+.abacus-col { position: relative; transition: background .2s; }
+.abacus-col.hl-now { background: rgba(255, 255, 255, .16); }
+.abacus-col.hl-start { background: rgba(255, 230, 80, .22); box-shadow: inset 0 0 0 2px rgba(255, 230, 80, .7); }
+.abacus-col.glow { animation: glow .9s ease-out; }
+@keyframes glow { 0% { background: rgba(255, 255, 200, .55); } 100% { background: transparent; } }
+.abacus-rod { position: absolute; left: 50%; top: 0; bottom: 0; width: 5px; margin-left: -2.5px; background: linear-gradient(90deg, #8a4a1c, #e0894a 50%, #8a4a1c); }
+.abacus-bead { position: absolute; left: 50%; top: 0; width: var(--bead-w); height: var(--bead-h); margin-left: calc(var(--bead-w) / -2);
+  clip-path: polygon(0 50%, 14% 18%, 32% 2%, 68% 2%, 86% 18%, 100% 50%, 86% 82%, 68% 98%, 32% 98%, 14% 82%);
+  background:
+    radial-gradient(ellipse 35% 22% at 38% 26%, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(rgba(255, 255, 255, .25) 0 46%, rgba(255, 255, 255, .55) 49%, rgba(0, 0, 0, .05) 52%, rgba(0, 0, 0, .3) 100%),
+    var(--bead);
+  transition: transform .28s cubic-bezier(.3, 1.4, .5, 1); z-index: 3; }
+.abacus-sparkles { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.spark { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; background: #fff7b0;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  animation: spark .7s ease-out forwards; }
+.spark.big { width: 14px; height: 14px; margin: -7px 0 0 -7px; background: #ffe14d; }
+@keyframes spark { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(.3); opacity: 0; } }
+.abacus.celebrate { animation: celebrate .8s ease-out; }
+@keyframes celebrate { 0% { box-shadow: inset 0 0 0 3px #2a2a2a, 0 0 0 0 rgba(255, 225, 77, .9); } 100% { box-shadow: inset 0 0 0 3px #2a2a2a, 0 0 0 24px rgba(255, 225, 77, 0); } }
+.abacus-labels { display: grid; grid-template-columns: repeat(17, 1fr); text-align: center; color: #fff; font-weight: 700; font-size: .85em; padding-top: 4px; min-height: 1.4em; }
