@@ -58,8 +58,9 @@ app.innerHTML = `
       <button class="block-btn small" data-act="mute" aria-pressed="false">🔊 소리</button>
     </header>
     <section class="panel level-panel" id="level-panel"></section>
-    <button class="game-card" data-act="defense"><span class="gc-icon">🏰</span><span class="gc-text"><b>게임: 주판 성 지키기</b><small>다가오는 몬스터를 계산으로 무찔러요. 말로도 답할 수 있어요.</small></span><span class="gc-go">⚔️</span></button>
     <div class="islands" id="islands"></div>
+    <!-- 게임은 섬 지도(마지막 자리점 성) 다음, 배지 앞에 둔다 -->
+    <button class="game-card" data-act="defense"><span class="gc-icon">🏰</span><span class="gc-text"><b>게임: 주판 성 지키기</b><small>다가오는 몬스터를 계산으로 무찔러요. 말로도 답할 수 있어요.</small></span><span class="gc-go">⚔️</span></button>
     <div class="map-panels">
       <section class="panel">
         <h2>배지</h2>
