@@ -17,8 +17,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SIZE = { monster: 288, background: 1600 };
 /** 오른쪽을 보고 그려진 몬스터(뒤집는다) */
 const FLIP = new Set(['skeleton']);
-/** 몸이 비치는 몬스터: 흰 바탕을 잘라 내지 않고, 흰 만큼 투명하게 한다(연기처럼 흐려지는 끝을 살린다) */
-const SOFT = new Set(['ghost']);
+/** 몸이 비치거나 연기에 싸인 몬스터: 흰 바탕을 잘라 내지 않고, 흰 만큼 투명하게 한다(연기처럼 흐려지는 끝을 살린다) */
+const SOFT = new Set(['ghost', 'lava', 'boss']);
 const MIME = { '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
 
 function collect(dir, kind) {
