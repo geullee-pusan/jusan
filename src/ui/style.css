@@ -224,7 +224,7 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 .def-hud { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; color: #fff; text-shadow: 2px 2px 0 #222; margin-bottom: 8px; font-size: 1.1em; }
 .def-walls .wall { font-style: normal; font-size: 1.4em; }
 .def-field { --g1: #6cc24a; --g2: #63b843; --line: rgba(0,0,0,.06); --veil: transparent;
-  position: relative; height: 420px; border: 3px solid #222; overflow: hidden; box-shadow: 0 4px 0 #222;
+  position: relative; height: 470px; border: 3px solid #222; overflow: hidden; box-shadow: 0 4px 0 #222;
   background:
     linear-gradient(transparent 0 30%, var(--line) 30% 32%, transparent 32% 63%, var(--line) 63% 65%, transparent 65%),
     repeating-linear-gradient(90deg, var(--g1) 0 46px, var(--g2) 46px 48px);
@@ -319,3 +319,20 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 .def-answer { margin-top: 10px; }
 #def-show.nope { animation: shake .35s; color: #c0392b; }
 .def-result { text-align: center; }
+
+/* 그림 몬스터: 블록 몸 대신 그림을 쓰고, 발밑 그림자와 움직임을 붙인다 */
+.mon.art { width: var(--w); height: auto; border: 0; background: none; box-shadow: none; opacity: 1; border-radius: 0; margin: 0; animation: none; }
+.mon.art::before, .mon.art i { display: none; }
+.mon.art::after { content: ''; position: absolute; left: 12%; right: 12%; bottom: -4px; top: auto; width: auto; height: 10px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0,0,0,.4), transparent); z-index: -1; }
+.mon.art.fly::after { left: 30%; right: 30%; bottom: -18px; opacity: .6; }
+.mon.art img { display: block; width: 100%; height: auto; transform-origin: 50% 100%; filter: drop-shadow(0 1px 0 rgba(0,0,0,.25)); user-select: none; -webkit-user-drag: none; }
+.mon.art.walk img { animation: art-walk .9s ease-in-out infinite alternate; }
+.mon.art.fly img { animation: art-fly 1.1s ease-in-out infinite alternate; }
+.mon.art.slime img { animation: art-squish 1s ease-in-out infinite alternate; }
+@keyframes art-walk { from { transform: rotate(-3deg) translateY(0); } to { transform: rotate(3deg) translateY(-3px); } }
+@keyframes art-fly { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(-8px) rotate(3deg); } }
+@keyframes art-squish { from { transform: scale(1.06, .92); } to { transform: scale(.96, 1.05); } }
+.mon-mini .mon.art { position: static; transform: none; width: auto; }
+.mon-mini .mon.art img { height: 30px; width: auto; animation: none; }
+.mon-mini .mon.art::after { display: none; }

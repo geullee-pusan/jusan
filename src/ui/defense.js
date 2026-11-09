@@ -10,7 +10,17 @@ import { listenOnce, listenSupported, stopListening } from './listen.js';
 import { sfx } from './sfx.js';
 
 const fmt = (n) => n.toLocaleString('ko-KR');
-const monHTML = (type) => `<div class="mon ${type}"><i></i></div>`;
+// 몬스터 그림(부모가 만든 그림을 scripts/make-art.mjs로 다듬은 것). 그림이 아직 없는 몬스터는 블록 모양으로 그린다.
+const ART = import.meta.glob('../content/monsters/*.webp', { eager: true, import: 'default' });
+/** 화면에 그리는 너비(px). 셀수록 크다 */
+const ART_WIDTH = { slime: 76, bat: 96, mushroom: 70, spider: 90, zombie: 66, skeleton: 66, ghost: 74, goblin: 70, golem: 100, knight: 80, witch: 80, dragon: 124, giant: 100, lava: 104, boss: 116 };
+/** 날거나 떠 있는 몬스터(땅 그림자를 작게, 위아래로 떠다님) */
+const FLYING = new Set(['bat', 'ghost']);
+const monHTML = (type) => {
+  const src = ART[`../content/monsters/${type}.webp`];
+  if (!src) return `<div class="mon ${type}"><i></i></div>`;
+  return `<div class="mon art ${type} ${FLYING.has(type) ? 'fly' : 'walk'}" style="--w:${ART_WIDTH[type] ?? 80}px"><img src="${src}" alt="" draggable="false"></div>`;
+};
 
 /**
  * @param {HTMLElement} root
