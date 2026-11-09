@@ -122,6 +122,10 @@ export function createTeacher(root, look, { unit = 6 } = {}) {
     [[3, 2.4, 1], [2.2, bodyTop - 1.5, bodyFront], '#ff4fa3'],
     [[1.4, 1.4, 1.2], [0, bodyTop - 1.5, bodyFront + 0.1], '#c9186f'],
   ]);
+  item('helmet', head, [
+    [[headW + 1.2, 4, headD + 1.2], [0, headH - 1, 0], '#9aa0a6'],
+    [[1.2, 3, 2], [0, headH + 1.5, 0], '#d62828'],
+  ]);
   item('scarf', rig, [
     [[bodyW + 1, 3, bodyD + 1], [0, bodyTop - 1.5, 0], '#2a9d8f'],
     [[3, 7, 1], [bodyW / 2 - 4, bodyTop - 6, bodyFront + 0.1], '#2a9d8f'],

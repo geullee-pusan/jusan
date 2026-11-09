@@ -206,3 +206,56 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 .skill-count { opacity: .7; min-width: 5.5em; text-align: right; }
 .map-panels { grid-template-columns: 1fr 1fr; }
 .skills-panel { grid-column: 1 / -1; }
+
+/* ---- 게임: 주판 성 지키기 ---- */
+.game-card { display: flex; align-items: center; gap: 14px; width: 100%; margin: 12px 0 4px; padding: 10px 16px; text-align: left; color: #fff;
+  background: repeating-linear-gradient(45deg, #7a2b2b 0 18px, #8a3333 18px 36px); box-shadow: inset -4px -5px 0 #4d1717, inset 4px 4px 0 rgba(255, 255, 255, .25), 0 5px 0 #222; }
+.gc-icon { font-size: 2.4em; }
+.gc-text { display: flex; flex-direction: column; flex: 1; }
+.gc-text small { font-size: .75em; opacity: .9; }
+.gc-go { font-size: 1.8em; }
+.def-title { color: #fff; text-shadow: 3px 3px 0 #222; flex: 1; text-align: center; }
+.def-setup p { margin: 4px 0 10px; }
+.def-row { display: flex; align-items: center; gap: 12px; margin: 8px 0; flex-wrap: wrap; }
+.def-row b { min-width: 7em; }
+.def-choices { display: flex; gap: 8px; flex-wrap: wrap; }
+.def-legend { margin: 10px 0; font-size: .85em; line-height: 2.2; }
+.def-best { font-weight: 700; }
+.def-hud { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; color: #fff; text-shadow: 2px 2px 0 #222; margin-bottom: 8px; font-size: 1.1em; }
+.def-walls .wall { font-style: normal; font-size: 1.4em; }
+.def-field { position: relative; height: 420px; border: 3px solid #222; overflow: hidden; box-shadow: 0 4px 0 #222;
+  background:
+    linear-gradient(transparent 0 30%, rgba(0,0,0,.06) 30% 32%, transparent 32% 63%, rgba(0,0,0,.06) 63% 65%, transparent 65%),
+    repeating-linear-gradient(90deg, #6cc24a 0 46px, #63b843 46px 48px); }
+.def-field.quake { animation: shake .35s; }
+.def-castle { position: absolute; left: 0; top: 0; bottom: 0; width: 70px; z-index: 3;
+  background: repeating-linear-gradient(0deg, #9aa0a6 0 22px, #7d848a 22px 24px), #9aa0a6; border-right: 4px solid #222; }
+.def-castle::before { content: ''; position: absolute; left: 0; right: 0; top: -2px; height: 16px; background: repeating-linear-gradient(90deg, #222 0 12px, transparent 12px 24px); }
+.def-castle.hurt { filter: sepia(.4) brightness(.9); }
+.def-flag { position: absolute; top: 18px; left: 18px; font-size: 1.8em; }
+.def-lane { position: absolute; left: 74px; right: 0; top: calc(var(--lane) * 33.3%); height: 33.3%; }
+.enemy { position: absolute; bottom: 6px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; transition: left .1s linear; z-index: 2; }
+.enemy.boom { animation: boom .45s ease-out forwards; }
+@keyframes boom { to { transform: translateX(-50%) scale(1.6) rotate(25deg); opacity: 0; } }
+.bubble { background: rgba(20, 20, 30, .9); color: #fff; border: 2px solid #fff; padding: 2px 8px; margin-bottom: 4px; font-size: .95em; line-height: 1.15; white-space: nowrap; }
+.q-rows { display: grid; grid-template-columns: auto auto; column-gap: 4px; text-align: right; }
+.q-mul { font-size: 1.2em; }
+/* 블록 몬스터(이 앱만의 모양): 몸 블록 + 눈 */
+.mon { position: relative; width: 48px; height: 40px; border: 3px solid #222; box-shadow: inset -5px -6px 0 rgba(0,0,0,.25), inset 5px 5px 0 rgba(255,255,255,.3); }
+.mon::before, .mon::after { content: ''; position: absolute; top: 30%; width: 8px; height: 8px; background: #111; }
+.mon::before { left: 22%; }
+.mon::after { right: 22%; }
+.mon.slime { background: #59d16c; opacity: .92; }
+.mon.skeleton { background: #eeeeea; }
+.mon.skeleton::before, .mon.skeleton::after { width: 10px; height: 10px; }
+.mon.golem { width: 60px; height: 54px; background: #8d939a; }
+.mon.dragon { width: 64px; height: 50px; background: #d64545; }
+.mon.dragon::before, .mon.dragon::after { background: #ffd23f; }
+.mon.boss { width: 78px; height: 66px; background: #6b3fa0; }
+.mon.boss::before, .mon.boss::after { background: #ff4d4d; width: 12px; height: 12px; }
+.mon.mini { display: inline-block; vertical-align: middle; transform: scale(.45); margin: -12px -14px; }
+.def-paused { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; background: rgba(0,0,0,.45); color: #fff; font-size: 2em; z-index: 5; }
+.def-answer { margin-top: 10px; }
+#def-show.nope { animation: shake .35s; color: #c0392b; }
+.def-result { text-align: center; }
+.def-stars { font-size: 3em; color: #e0a800; letter-spacing: .1em; }

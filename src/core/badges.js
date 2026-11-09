@@ -12,6 +12,7 @@ export const BADGES = [
   { id: 'perfect', name: '여덟 문제 한 번에', how: '한 자리 곱셈 한 판의 여덟 문제를 모두 한 번에 맞혔어요', item: { id: 'crown', name: '금관' } },
   { id: 'tt-master', name: '구구 박사', how: '곱셈구구 스무 문제 중 열아홉 개 넘게 한 번에 맞혔어요', item: { id: 'scarf', name: '목도리' } },
   { id: 'forest', name: '숲 탐험가', how: '덧셈·뺄셈 숲의 여섯 섬을 모두 한 판씩 끝까지 풀었어요', item: { id: 'backpack', name: '배낭' } },
+  { id: 'defender', name: '성 지킴이', how: '주판 성 지키기에서 성벽을 하나도 안 잃고 성을 지켰어요', item: { id: 'helmet', name: '투구' } },
   { id: 'mind', name: '머릿속 주판', how: '암산 하늘에서 한 판 여덟 문제 중 여섯 개 넘게 맞혔어요', item: { id: 'goggles', name: '고글' } },
 ];
 
@@ -38,6 +39,7 @@ export function earnedBadges(rounds) {
       }
       if (r.finished && r.results.length >= 8 && r.results.every((x) => x.firstTry)) got.add('perfect');
     }
+    if (lesson === 'defense' && r.finished && r.defense?.walls === 3) got.add('defender');
     if (lesson === 'mul-0' && r.finished && r.results.filter((x) => x.firstTry).length >= 19) got.add('tt-master');
     if (FOREST.includes(lesson) && r.finished) forestDone.add(lesson);
     if (lesson.startsWith('mental-') && r.finished && r.results.filter((x) => x.correct).length >= 6) got.add('mind');

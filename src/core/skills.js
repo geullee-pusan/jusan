@@ -97,7 +97,7 @@ export function skillMap(rounds) {
   for (const r of rounds) {
     const lesson = r.lesson ?? 'mul-1digit';
     for (const result of r.results ?? []) {
-      for (const [id, ok] of outcomes(lesson, result)) history[id]?.push(ok);
+      for (const [id, ok] of outcomes(result.lesson ?? lesson, result)) history[id]?.push(ok);
     }
   }
   return SKILLS.map((s) => {

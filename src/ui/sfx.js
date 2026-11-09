@@ -37,6 +37,10 @@ export function sfx(name) {
       tone(784, 0, 0.12);
       tone(1175, 0.11, 0.22);
     }
+    if (name === 'wall') {
+      tone(140, 0, 0.18, { type: 'sawtooth', gain: 0.16 });
+      tone(90, 0.08, 0.22, { type: 'square', gain: 0.12 });
+    }
     if (name === 'badge') [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.16));
   } catch {
     // 소리를 낼 수 없는 브라우저

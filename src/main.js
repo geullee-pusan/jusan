@@ -15,6 +15,7 @@ import { roundEndScenes } from './core/practice.js';
 import { newlyDone, overallLevel, recommend, skillMap } from './core/skills.js';
 import { createAbacus } from './ui/abacus-view.js';
 import { createBoard } from './ui/board.js';
+import { createDefense } from './ui/defense.js';
 import { prepareEndSound } from './ui/end-sound.js';
 import { registerServiceWorker } from './ui/install.js';
 import { listenOnce, listenSupported, stopListening } from './ui/listen.js';
@@ -41,8 +42,8 @@ try {
   // 글꼴을 못 불러오면 기본 글꼴로 보인다
 }
 
-const BADGE_ICON = { 'first-round': '🧱', 'zero-pad': '0️⃣', friend: '🤝', 'zero-zero': '⭕', bonus: '🚀', perfect: '👑', 'tt-master': '🧮', forest: '🌲', mind: '🧠' };
-const ITEM_ICON = { hat: '🎩', glasses: '🕶️', tie: '👔', bowtie: '🎀', cape: '🦸', crown: '👑', scarf: '🧣', backpack: '🎒', goggles: '🥽' };
+const BADGE_ICON = { defender: '🛡️', 'first-round': '🧱', 'zero-pad': '0️⃣', friend: '🤝', 'zero-zero': '⭕', bonus: '🚀', perfect: '👑', 'tt-master': '🧮', forest: '🌲', mind: '🧠' };
+const ITEM_ICON = { helmet: '⛑️', hat: '🎩', glasses: '🕶️', tie: '👔', bowtie: '🎀', cape: '🦸', crown: '👑', scarf: '🧣', backpack: '🎒', goggles: '🥽' };
 const FLASH_SPEEDS = [
   { ms: 1500, label: '🐢 느리게' },
   { ms: 1000, label: '🚶 보통' },
@@ -57,6 +58,7 @@ app.innerHTML = `
       <button class="block-btn small" data-act="mute" aria-pressed="false">🔊 소리</button>
     </header>
     <section class="panel level-panel" id="level-panel"></section>
+    <button class="game-card" data-act="defense"><span class="gc-icon">🏰</span><span class="gc-text"><b>게임: 주판 성 지키기</b><small>다가오는 몬스터를 계산으로 무찔러요. 말로도 답할 수 있어요.</small></span><span class="gc-go">⚔️</span></button>
     <div class="islands" id="islands"></div>
     <div class="map-panels">
       <section class="panel">
@@ -83,6 +85,8 @@ app.innerHTML = `
     </div>
     <p class="voice-note" id="voice-note"></p>
   </section>
+
+  <section id="defense" class="screen defense" hidden></section>
 
   <section id="play" class="screen play" hidden>
     <header class="play-top">
@@ -141,7 +145,7 @@ function renderMap() {
   // 세계와 섬. 열린 섬만 풀 수 있고, 끝까지 푼 판 수만큼 깃발을 단다. 마지막에 푼 섬에 "지금 여기".
   const islands = $('#islands');
   islands.innerHTML = '';
-  const playedIds = data.rounds.map((r) => r.lesson);
+  const playedIds = data.rounds.map((r) => r.lesson).filter((id) => SCRIPTS[id]);
   const here = lastIsland ?? playedIds.at(-1) ?? 'mul-1digit';
   let no = 0;
   for (const world of curriculum.worlds) {
@@ -175,7 +179,7 @@ function renderMap() {
   const openIds = curriculum.worlds.flatMap((w) => w.islands).filter((i) => i.open).map((i) => i.lesson);
   const rec = recommend(data.rounds, openIds);
   const recIsland = rec && curriculum.worlds.flatMap((w) => w.islands).find((i) => i.lesson === rec.island);
-  const recWhy = !rec ? '' : rec.why === 'almost' ? `'${rec.skill.name}'이(가) 거의예요. 조금만 더!` : rec.why === 'notyet' ? `'${rec.skill.name}'을(를) 다시 연습해 봐요.` : '아직 안 가 본 섬이에요.';
+  const recWhy = !rec ? '' : rec.why === 'almost' ? `'${rec.skill.name}' 연습이 거의 다 됐어요. 조금만 더!` : rec.why === 'notyet' ? `'${rec.skill.name}' 연습을 다시 해 봐요.` : '아직 안 가 본 섬이에요.';
   $('#level-panel').innerHTML = `
     <div class="level-badge"><span class="lv-num">Lv.${lv.level}</span><span class="lv-title">${lv.title}</span></div>
     <div class="lv-bar" aria-label="다음 레벨까지 ${lv.toNext}점"><span style="width:${((3 - lv.toNext) / 3) * 100}%"></span></div>
@@ -233,9 +237,12 @@ function renderMap() {
   }
   dressTeacher.setOutfit(data.outfit);
   // 기록
-  const finished = data.rounds.filter((r) => r.finished).length;
-  const islandsPlayed = new Set(data.rounds.filter((r) => r.finished).map((r) => r.lesson)).size;
-  $('#records').textContent = finished ? `끝까지 푼 판: ${finished}판 · 깃발 꽂은 섬: ${islandsPlayed}곳` : '아직 푼 판이 없어요. 첫 판을 풀어 봐요!';
+  const islandRounds = data.rounds.filter((r) => r.finished && r.lesson !== 'defense');
+  const finished = islandRounds.length;
+  const islandsPlayed = new Set(islandRounds.map((r) => r.lesson ?? 'mul-1digit')).size;
+  const games = data.rounds.filter((r) => r.lesson === 'defense').length;
+  const gameText = games ? ` · 성 지키기: ${games}판` : '';
+  $('#records').textContent = finished || games ? `끝까지 푼 판: ${finished}판 · 깃발 꽂은 섬: ${islandsPlayed}곳${gameText}` : '아직 푼 판이 없어요. 첫 판을 풀어 봐요!';
 }
 
 $('#map').addEventListener('click', (e) => {
@@ -641,6 +648,11 @@ document.addEventListener('click', (e) => {
   if (act === 'lecture') return answering?.({ type: 'lecture' });
   if (act === 'to-map' || act === 'back-map') return toMap();
   if (act === 'again-round') return openPlay(currentIsland, 'round');
+  if (act === 'defense') {
+    $('#map').hidden = true;
+    $('#defense').hidden = false;
+    return defense.open();
+  }
   if (act === 'mute') {
     const on = button.getAttribute('aria-pressed') !== 'true';
     document.querySelectorAll('[data-act=mute]').forEach((b) => {
@@ -650,6 +662,17 @@ document.addEventListener('click', (e) => {
     setMuted(on);
     setSfxMuted(on);
   }
+});
+
+const defense = createDefense($('#defense'), {
+  load: loadData,
+  save: saveData,
+  onExit: () => {
+    $('#defense').hidden = true;
+    $('#map').hidden = false;
+    data = loadData();
+    renderMap();
+  },
 });
 
 renderMap();
