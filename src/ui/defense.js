@@ -271,17 +271,11 @@ export function createDefense(root, io) {
         act(el, e.type);
       }
     }
+    // 성에 닿은 몬스터: 성을 한 번 공격하고(성벽 한 칸), 공격에 성공한 듯 물러나며 사라진다
     for (const e of reached(alive, game.t)) {
-      game.gone.add(e.id);
-      game.els.get(e.id)?.remove();
-      game.walls--;
-      sfx('wall');
-      field.classList.remove('quake');
-      void field.offsetWidth;
-      field.classList.add('quake');
-      renderHud();
+      game.gone.add(e.id); // 이제 답으로 무찌를 수 없다
+      strike(game.els.get(e.id), e.type);
     }
-    if (game.walls <= 0) return finish();
     requestAnimationFrame(frame);
   }
 
@@ -315,6 +309,36 @@ export function createDefense(root, io) {
     return true;
   }
 
+  /**
+   * 성 공격: 성으로 달려들어 한 번 치고(맞는 순간 성벽이 한 칸 깎인다), 물러나며 사라진다.
+   * 걷는 몬스터는 뒤로 물러나며 흐려지고, 나는 몬스터는 위로 날아가 버린다.
+   * 성벽이 다 깎이면 마지막 공격 장면을 잠깐 보여 주고 끝낸다.
+   */
+  function strike(el, type) {
+    const my = game;
+    if (!el) return;
+    el.classList.add('striking', FLYING.has(type) ? 'fly-off' : 'walk-off');
+    sfx(ACT_SOUND[type]);
+    setTimeout(() => {
+      if (game !== my || my.over) return;
+      my.walls = Math.max(0, my.walls - 1);
+      sfx('wall');
+      field.classList.remove('quake');
+      void field.offsetWidth;
+      field.classList.add('quake');
+      const castle = $('#def-castle');
+      castle.classList.remove('hit');
+      void castle.offsetWidth;
+      castle.classList.add('hit');
+      renderHud();
+      if (my.walls <= 0 && !my.ending) {
+        my.ending = true;
+        setTimeout(() => game === my && finish(), 900);
+      }
+    }, 380);
+    setTimeout(() => el.remove(), 1400);
+  }
+
   /** 몬스터 고유 동작 한 번: 그림을 움직이고, 몬스터에 따라 효과(포자, 먼지, 불, 불씨, 기운)를 낸다 */
   function act(el, type) {
     const mon = el.querySelector('.mon.art');
@@ -338,13 +362,17 @@ export function createDefense(root, io) {
     const stageBefore = stageOf(game.level);
     game.level = level;
     sfx('levelup');
+    // 레벨이 오르면 깎인 성벽을 한 칸 고친다(부모 결정, 2026-11-10). 이미 무너지는 중이면 고치지 않는다
+    const healed = game.walls < WALLS && game.walls > 0 && !game.ending;
+    if (healed) game.walls += 1;
     const stage = stageOf(level);
     setStage(stage);
     const box = $('#def-levelup');
     const newTypes = typesAt(level).filter((t) => !typesAt(level - 1).includes(t));
     const where = stage !== stageBefore ? `${STAGES[stage - 1]}에 왔어요. ` : '';
     const fresh = newTypes.length ? `<br>새 몬스터: ${newTypes.map((t) => `<span class="mon-mini">${monHTML(t)}</span> ${ENEMIES[t].name}`).join(' ')}` : '';
-    box.innerHTML = `⬆️ 레벨 ${level}!<small>${where}몬스터가 조금 더 세지고 빨라져요${fresh}</small>`;
+    const heal = healed ? '<br>🧱 성벽 한 칸을 고쳤어요' : '';
+    box.innerHTML = `⬆️ 레벨 ${level}!<small>${where}몬스터가 조금 더 세지고 빨라져요${heal}${fresh}</small>`;
     box.hidden = false;
     box.classList.remove('show');
     void box.offsetWidth;
