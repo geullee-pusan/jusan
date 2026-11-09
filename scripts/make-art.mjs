@@ -17,6 +17,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SIZE = { monster: 288, background: 1600 };
 /** 오른쪽을 보고 그려진 몬스터(뒤집는다) */
 const FLIP = new Set(['skeleton']);
+/** 몸이 비치는 몬스터: 흰 바탕을 잘라 내지 않고, 흰 만큼 투명하게 한다(연기처럼 흐려지는 끝을 살린다) */
+const SOFT = new Set(['ghost']);
 const MIME = { '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
 
 function collect(dir, kind) {
@@ -27,7 +29,7 @@ function collect(dir, kind) {
     .map((f) => {
       const name = f.slice(0, -extname(f).length);
       const k = kind === 'background' && name === 'castle' ? 'cutout' : kind;
-      return { name, kind: k, flip: FLIP.has(name), url: `data:${MIME[extname(f).toLowerCase()]};base64,${readFileSync(join(abs, f)).toString('base64')}` };
+      return { name, kind: k, flip: FLIP.has(name), soft: SOFT.has(name), url: `data:${MIME[extname(f).toLowerCase()]};base64,${readFileSync(join(abs, f)).toString('base64')}` };
     });
 }
 
@@ -39,6 +41,19 @@ ${jobs.map((j, i) => `<img id="src-${i}" src="${j.url}" style="display:none">`).
 <script>
 const JOBS = ${JSON.stringify(jobs.map(({ url, ...rest }) => rest))};
 const SIZE = ${JSON.stringify(size)};
+
+/** 흰 바탕을 밝기만큼 투명하게 한다. 흰 기운은 걷어 내어 색이 바래지 않게 한다 */
+function softKey(d) {
+  const p = d.data;
+  for (let i = 0; i < p.length; i += 4) {
+    const mn = Math.min(p[i], p[i + 1], p[i + 2]);
+    const a = Math.max(0, Math.min(1, (250 - mn) / 110));
+    if (a < 1) {
+      if (a > 0.02) for (let c = 0; c < 3; c++) p[i + c] = Math.max(0, Math.min(255, (p[i + c] - 255 * (1 - a)) / a));
+      p[i + 3] = Math.round(255 * a);
+    }
+  }
+}
 
 /** 가장자리에서 이어진 흰 바탕을 지운다. 이미 투명한 그림이면 그대로 둔다. */
 function cutWhite(d, w, h) {
@@ -64,6 +79,33 @@ function cutWhite(d, w, h) {
     if (x < w - 1) stack.push(k + 1);
     if (y > 0) stack.push(k - w);
     if (y < h - 1) stack.push(k + w);
+  }
+  // 몸 안에 갇힌 흰 바탕(갈비뼈 사이, 팔과 몸 사이 등): 아주 흰 곳이 넓게 모여 있으면 바탕으로 본다.
+  // 작은 흰 점(눈의 반짝임, 하이라이트)은 남긴다.
+  const isHole = (i) => {
+    const r = p[i], g = p[i + 1], b = p[i + 2];
+    const mn = Math.min(r, g, b), mx = Math.max(r, g, b);
+    return mn >= 236 && mx - mn <= 16;
+  };
+  const minHole = Math.round(w * h * 0.0004);
+  const seen = new Uint8Array(w * h);
+  for (let s = 0; s < w * h; s++) {
+    if (gone[s] || seen[s] || !isHole(s * 4)) continue;
+    const comp = [];
+    stack.push(s);
+    seen[s] = 1;
+    while (stack.length) {
+      const k = stack.pop();
+      comp.push(k);
+      const x = k % w, y = (k - x) / w;
+      for (const n of [x > 0 ? k - 1 : -1, x < w - 1 ? k + 1 : -1, y > 0 ? k - w : -1, y < h - 1 ? k + w : -1]) {
+        if (n >= 0 && !seen[n] && !gone[n] && isHole(n * 4)) {
+          seen[n] = 1;
+          stack.push(n);
+        }
+      }
+    }
+    if (comp.length >= minHole) for (const k of comp) gone[k] = 1;
   }
   for (let k = 0; k < w * h; k++) if (gone[k]) p[k * 4 + 3] = 0;
   // 테두리: 지운 곳과 닿은 두 겹을 밝기만큼 반투명하게 하고, 흰 기운을 걷어 낸다
@@ -143,7 +185,8 @@ function run() {
       continue;
     }
     const d = x.getImageData(0, 0, w, h);
-    cutWhite(d, w, h);
+    if (job.soft) softKey(d);
+    else cutWhite(d, w, h);
     x.putImageData(d, 0, 0);
     const b = bounds(d, w, h);
     const pad = Math.round(Math.max(b.w, b.h) * 0.02);
