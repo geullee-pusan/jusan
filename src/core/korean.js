@@ -29,3 +29,14 @@ export function placeName(place) {
   if (!name) throw new Error(`자리 이름이 없어요: ${place}`);
   return name;
 }
+
+const NATIVE_ONES = ['', '한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉'];
+const NATIVE_TENS = ['', '열', '스물', '서른', '마흔', '쉰', '예순', '일흔', '여든', '아흔'];
+
+/** 개수 세기 말(관형): 1 → "한", 20 → "스무", 21 → "스물한", 0 → "영" */
+export function nativeCount(n) {
+  if (!Number.isInteger(n) || n < 0 || n > 99) throw new Error(`1~99만 세요: ${n}`);
+  if (n === 0) return '영';
+  if (n === 20) return '스무';
+  return NATIVE_TENS[Math.floor(n / 10)] + NATIVE_ONES[n % 10];
+}

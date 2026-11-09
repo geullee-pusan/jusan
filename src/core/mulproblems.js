@@ -25,7 +25,7 @@ export function makeMulProblem(seed, { multiDigits, singleFirst, need = {}, avoi
     const solution = multiplySteps(a, b);
     const f = featuresOf(solution);
     if (Object.entries(need).every(([name, want]) => want === undefined || f[name] === want)) {
-      return { a, b, key, solution, features: f };
+      return { kind: 'mul', a, b, key, answer: solution.answer, solution, features: f };
     }
   }
   throw new Error(`조건에 맞는 문제를 찾지 못했어요: ${JSON.stringify({ multiDigits, singleFirst, need })}`);

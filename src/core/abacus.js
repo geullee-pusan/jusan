@@ -7,7 +7,11 @@
 //  A1 바로 넣기(1짜리 알)        A2 바로 넣기(5짜리 알 함께)
 //  A3 5의 짝 덧셈                A4 친구수 덧셈(앞자리로 1 올리고 친구수 빼기)
 //  A5 친구수와 5의 짝 함께        A6 이어서 받아올리기(올린 앞자리가 또 넘침)
-// 뺄셈(B1~B6)은 덧셈 단계(Phase 1)에서 더한다.
+// 뺄셈 기법(덧셈의 거울)
+//  B1 바로 빼기(1짜리 알)        B2 5짜리 알과 함께 바로 빼기
+//  B3 5의 짝 뺄셈(아래알 넣고 윗알 올리기)
+//  B4 친구수 뺄셈(앞자리에서 1 빌리고 친구수 더하기)
+//  B5 친구수와 5의 짝 함께        B6 이어서 받아내리기(빌린 앞자리가 또 모자람)
 
 export const TECHNIQUES = {
   A1: '바로 넣기',
@@ -16,6 +20,12 @@ export const TECHNIQUES = {
   A4: '친구수 덧셈',
   A5: '친구수와 5의 짝 함께',
   A6: '이어서 받아올리기',
+  B1: '바로 빼기',
+  B2: '5짜리 알과 함께 바로 빼기',
+  B3: '5의 짝 뺄셈',
+  B4: '친구수 뺄셈',
+  B5: '친구수와 5의 짝 함께 빼기',
+  B6: '이어서 받아내리기',
 };
 
 /** 한 자리 값을 알로 */
@@ -97,6 +107,58 @@ export function addNumber(stateIn, n, place = 0) {
   digits.forEach((d, i) => {
     const at = place + digits.length - 1 - i;
     const r = addDigit(state, at, d);
+    state = r.state;
+    steps.push(...r.steps);
+  });
+  return { state, steps };
+}
+
+/**
+ * place 자리에서 d(1~9)를 뺀다. 받아내림까지 한다. 주판 값이 0보다 작아지면 안 된다.
+ * @returns {{state: number[], steps: object[]}}
+ */
+export function subDigit(stateIn, place, d) {
+  if (!Number.isInteger(d) || d < 0 || d > 9) throw new Error(`뺄 수는 0~9예요: ${d}`);
+  const state = [...stateIn];
+  const steps = [];
+  if (d === 0) return { state, steps };
+  subAt(state, place, d, steps, false);
+  return { state, steps };
+}
+
+function subAt(state, place, d, steps, isBorrow) {
+  if (place >= state.length) throw new Error('주판에 뺄 만큼의 수가 없어요');
+  const v = state[place];
+  const { lower } = beads(v);
+  if (v >= d) {
+    let technique;
+    if (d >= 5) technique = 'B2';
+    else if (lower >= d) technique = 'B1';
+    else technique = 'B3';
+    state[place] = v - d;
+    steps.push({ place, sub: d, technique, before: v, after: v - d, borrow: isBorrow });
+    return;
+  }
+  // 모자란다: 앞자리에서 1을 빌리고(먼저), 이 자리에 친구수(10 - d)를 더한다(강의 순서와 같은 방향).
+  const friend = 10 - d;
+  // 친구수가 4 이하인데 아래알 자리가 모자라면(아래알이 이미 많으면) 5의 짝으로 더해야 한다.
+  let technique = friend <= 4 && lower + friend > 4 ? 'B5' : 'B4';
+  if (isBorrow) technique = 'B6';
+  subAt(state, place + 1, 1, steps, true);
+  state[place] = v + friend;
+  steps.push({ place, sub: d, friend, technique, before: v, after: v + friend, borrow: isBorrow });
+}
+
+/**
+ * 여러 자리 수 n을 place 자리부터(n의 일의 자리가 place) 뺀다. 앞자리부터 뺀다.
+ */
+export function subNumber(stateIn, n, place = 0) {
+  let state = [...stateIn];
+  const steps = [];
+  const digits = String(n).split('').map(Number);
+  digits.forEach((d, i) => {
+    const at = place + digits.length - 1 - i;
+    const r = subDigit(state, at, d);
     state = r.state;
     steps.push(...r.steps);
   });

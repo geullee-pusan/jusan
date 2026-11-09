@@ -79,3 +79,51 @@ test('여러 자리 수를 앞자리부터 더한다', () => {
   assert.equal(steps[1].technique, 'A5', '십의 자리 5에서 친구수 3을 빼려면 5의 짝이 필요하다');
   assert.equal(steps[1].friend, 3, '7의 친구수 3을 뺀다');
 });
+
+import { subDigit, subNumber } from '../src/core/abacus.js';
+
+/** 일의 자리 v에서 d를 뺄 때(앞자리에 빌려 올 1이 있음) 일의 자리 단계의 기법 */
+function subTechniqueAt(v, d) {
+  const { steps } = subDigit(fromNumber(10 + v, 3), 0, d);
+  return steps.find((s) => s.place === 0).technique;
+}
+
+test('뺄셈 기법 표: 덧셈의 거울(손으로 따져 확인한 줄 포함)', () => {
+  // v=5에서 3을 빼려면 아래알이 없어 아래알 2를 넣고 윗알을 올린다(B3).
+  // v=4에서 6을 빼려면 앞자리에서 1 빌리고 친구수 4를 더해야 하는데 아래알이 꽉 차 5의 짝으로 더한다(B5).
+  const table = [
+    '444444444', // v=0: 무엇을 빼도 모자란다
+    '144445444',
+    '114445544',
+    '111445554',
+    '111145555', // v=4
+    '333324444', // v=5: 1~4는 5의 짝, 5는 윗알 빼기, 6~9는 친구수
+    '133322444',
+    '113322244',
+    '111322224',
+    '111122222', // v=9
+  ];
+  for (let v = 0; v <= 9; v++) {
+    for (let d = 1; d <= 9; d++) assert.equal(subTechniqueAt(v, d), `B${table[v][d - 1]}`, `${v}-${d}`);
+  }
+});
+
+test('뺄셈 100가지 조합과 여러 자리 뺄셈이 맞는 답을 낸다', () => {
+  for (let v = 0; v <= 99; v++) {
+    for (let d = 0; d <= 9; d++) {
+      if (v - d < 0) continue;
+      assert.equal(toNumber(subDigit(fromNumber(v, 3), 0, d).state), v - d, `${v}-${d}`);
+    }
+  }
+  assert.equal(toNumber(subNumber(fromNumber(522, 4), 72).state), 450);
+});
+
+test('이어서 받아내리기: 102 - 5', () => {
+  const { state, steps } = subDigit(fromNumber(102, 4), 0, 5);
+  assert.equal(toNumber(state), 97);
+  assert.ok(steps.some((s) => s.technique === 'B6'));
+});
+
+test('주판에 없는 만큼 빼면 알려 준다', () => {
+  assert.throws(() => subDigit(fromNumber(3, 2), 0, 5));
+});

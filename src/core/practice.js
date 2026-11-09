@@ -6,6 +6,7 @@
 //  - 여덟 문제를 마치면 보너스 문제를 풀지 아이가 고른다.
 // 강의(lesson.js의 강의 부분)는 아이가 "강의 보기"를 누를 때만 본다.
 import { formatDuration } from './badges.js';
+import { nativeCount } from './korean.js';
 import { line, solveScenes } from './lesson.js';
 import { diagnoseMul } from './muldiagnose.js';
 import { makeMulProblem } from './mulproblems.js';
@@ -13,7 +14,6 @@ import { readNumber } from './numread.js';
 import { seedFrom } from './rng.js';
 
 const NTH = ['', '첫 번째', '두 번째', '세 번째', '네 번째', '다섯 번째', '여섯 번째', '일곱 번째', '여덟 번째'];
-const COUNT = ['영', '한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟'];
 const read = (n) => readNumber(n);
 
 /** 한 판의 문제 차례: 쉬운 것 → 어려운 것 */
@@ -98,7 +98,7 @@ export function bonusIntroScenes(script, seed) {
  */
 export function roundEndScenes(script, summary, seed) {
   const L = (key, vars) => line(script, key, seed, vars);
-  const scenes = [summary.correct > 0 ? L('round-result', { correct: COUNT[summary.correct] }) : L('round-result-zero')];
+  const scenes = [summary.correct > 0 ? L('round-result', { correct: nativeCount(summary.correct), total: nativeCount(summary.total) }) : L('round-result-zero')];
   if (Number.isFinite(summary.seconds)) {
     if (summary.best === null) scenes.push(L('time-first', { time: formatDuration(summary.seconds) }));
     else if (summary.seconds < summary.best) scenes.push(L('time-faster', { diff: formatDuration(summary.best - summary.seconds) }));

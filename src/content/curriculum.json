@@ -7,12 +7,48 @@
       "biome": "forest",
       "about": "주판알을 올리고 내리는 손을 익혀요.",
       "islands": [
-        { "id": "add-1", "title": "주판과 친해지기", "learn": "수를 놓고 읽기, 바로 넣기·바로 빼기", "open": false },
-        { "id": "add-2", "title": "친구수 덧셈", "learn": "넘치면 앞자리로 1 올리고 친구수 빼기", "open": false },
-        { "id": "add-3", "title": "친구수 뺄셈", "learn": "모자라면 앞자리에서 1 빌리고 친구수 더하기", "open": false },
-        { "id": "add-4", "title": "5의 짝", "learn": "윗알과 아래알을 함께 쓰는 덧셈·뺄셈", "open": false },
-        { "id": "add-5", "title": "친구수와 5의 짝 함께", "learn": "두 가지를 한 번에, 이어서 받아올리기", "open": false },
-        { "id": "add-6", "title": "여러 자리 여러 줄", "learn": "두세 자리 수 다섯 줄 더하고 빼기", "open": false }
+        {
+          "id": "add-1",
+          "title": "주판과 친해지기",
+          "learn": "수를 놓고 읽기, 바로 넣기·바로 빼기",
+          "open": true,
+          "lesson": "add-1"
+        },
+        {
+          "id": "add-2",
+          "title": "친구수 덧셈",
+          "learn": "넘치면 앞자리로 1 올리고 친구수 빼기",
+          "open": true,
+          "lesson": "add-2"
+        },
+        {
+          "id": "add-3",
+          "title": "친구수 뺄셈",
+          "learn": "모자라면 앞자리에서 1 빌리고 친구수 더하기",
+          "open": true,
+          "lesson": "add-3"
+        },
+        {
+          "id": "add-4",
+          "title": "5의 짝",
+          "learn": "윗알과 아래알을 함께 쓰는 덧셈·뺄셈",
+          "open": true,
+          "lesson": "add-4"
+        },
+        {
+          "id": "add-5",
+          "title": "친구수와 5의 짝 함께",
+          "learn": "두 가지를 한 번에, 이어서 받아올리기",
+          "open": true,
+          "lesson": "add-5"
+        },
+        {
+          "id": "add-6",
+          "title": "여러 자리 여러 줄",
+          "learn": "두세 자리 수 다섯 줄 더하고 빼기",
+          "open": true,
+          "lesson": "add-6"
+        }
       ]
     },
     {
@@ -21,10 +57,32 @@
       "biome": "mountain",
       "about": "자릿수를 찾고, 앞자리부터 곱해서 더해요.",
       "islands": [
-        { "id": "mul-0", "title": "곱셈구구 점검", "learn": "주판 곱셈 전에 구구를 빠르고 정확하게", "open": false },
-        { "id": "mul-1digit", "title": "한 자리 곱셈", "learn": "한 자리 × 두·세 자리, 영 붙이기", "open": true, "lesson": "mul-1digit" },
-        { "id": "mul-2x2", "title": "두 자리 × 두 자리", "learn": "곱하는 수가 두 자리일 때 자리 옮기기", "open": false },
-        { "id": "mul-big", "title": "큰 곱셈", "learn": "세 자리 × 두 자리, 답이 다섯 자리 넘게", "open": false }
+        {
+          "id": "mul-0",
+          "title": "곱셈구구 점검",
+          "learn": "주판 곱셈 전에 구구를 빠르고 정확하게",
+          "open": true,
+          "lesson": "mul-0"
+        },
+        {
+          "id": "mul-1digit",
+          "title": "한 자리 곱셈",
+          "learn": "한 자리 × 두·세 자리, 영 붙이기",
+          "open": true,
+          "lesson": "mul-1digit"
+        },
+        {
+          "id": "mul-2x2",
+          "title": "두 자리 × 두 자리",
+          "learn": "곱하는 수가 두 자리일 때 자리 옮기기",
+          "open": false
+        },
+        {
+          "id": "mul-big",
+          "title": "큰 곱셈",
+          "learn": "세 자리 × 두 자리, 답이 다섯 자리 넘게",
+          "open": false
+        }
       ]
     },
     {
@@ -33,9 +91,24 @@
       "biome": "sea",
       "about": "몫을 세우고, 곱해서 빼요.",
       "islands": [
-        { "id": "div-1", "title": "한 자리로 나누기", "learn": "두 자리 ÷ 한 자리, 몫 세우기", "open": false },
-        { "id": "div-2", "title": "큰 수 나누기", "learn": "세·네 자리 ÷ 한 자리", "open": false },
-        { "id": "div-3", "title": "두 자리로 나누기", "learn": "몫을 어림하고 고치기", "open": false }
+        {
+          "id": "div-1",
+          "title": "한 자리로 나누기",
+          "learn": "두 자리 ÷ 한 자리, 몫 세우기",
+          "open": false
+        },
+        {
+          "id": "div-2",
+          "title": "큰 수 나누기",
+          "learn": "세·네 자리 ÷ 한 자리",
+          "open": false
+        },
+        {
+          "id": "div-3",
+          "title": "두 자리로 나누기",
+          "learn": "몫을 어림하고 고치기",
+          "open": false
+        }
       ]
     },
     {
@@ -44,9 +117,27 @@
       "biome": "sky",
       "about": "주판 없이, 머릿속 주판으로 계산해요.",
       "islands": [
-        { "id": "mental-1", "title": "머릿속 주판", "learn": "주판 그림을 떠올리며 한 자리 세 줄", "open": false },
-        { "id": "mental-2", "title": "듣고 하는 암산", "learn": "선생님이 불러 주는 수를 머리로", "open": false },
-        { "id": "mental-3", "title": "번쩍 암산", "learn": "숫자가 한 줄씩 번쩍 나타났다 사라져요", "open": false }
+        {
+          "id": "mental-1",
+          "title": "머릿속 주판",
+          "learn": "주판 그림을 떠올리며 한 자리 세 줄",
+          "open": true,
+          "lesson": "mental-1"
+        },
+        {
+          "id": "mental-2",
+          "title": "듣고 하는 암산",
+          "learn": "선생님이 불러 주는 수를 머리로",
+          "open": true,
+          "lesson": "mental-2"
+        },
+        {
+          "id": "mental-3",
+          "title": "번쩍 암산",
+          "learn": "숫자가 한 줄씩 번쩍 나타났다 사라져요",
+          "open": true,
+          "lesson": "mental-3"
+        }
       ]
     },
     {
@@ -55,8 +146,18 @@
       "biome": "castle",
       "about": "자리점과 쉼표로 큰 수와 소수를 다뤄요.",
       "islands": [
-        { "id": "dec-1", "title": "큰 수와 쉼표", "learn": "만, 십만 자리 놓고 읽기", "open": false },
-        { "id": "dec-2", "title": "소수", "learn": "일의 자리 오른쪽은 소수 자리", "open": false }
+        {
+          "id": "dec-1",
+          "title": "큰 수와 쉼표",
+          "learn": "만, 십만 자리 놓고 읽기",
+          "open": false
+        },
+        {
+          "id": "dec-2",
+          "title": "소수",
+          "learn": "일의 자리 오른쪽은 소수 자리",
+          "open": false
+        }
       ]
     }
   ]

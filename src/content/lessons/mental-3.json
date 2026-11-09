@@ -1,0 +1,66 @@
+{
+  "_설명": "강의는 아이가 보는 강의의 흐름(복습 → 방법 → 같이 풀기)과 말투를 따라 새로 썼다. 방법의 근거: docs/research-curriculum.md 3·4·8절, docs/SPEC.md 4.2절.",
+  "id": "mental-3",
+  "title": "번쩍 암산",
+  "kind": "addsub",
+  "mode": "flash",
+  "round": {
+    "count": 8,
+    "spec": {
+      "rows": 4,
+      "digits": [
+        1,
+        1
+      ],
+      "minus": 0
+    }
+  },
+  "bonus": {
+    "rows": 5,
+    "digits": [
+      1,
+      1
+    ],
+    "minus": 0
+  },
+  "lecture": [
+    {
+      "say": "오늘은 번쩍 암산이에요."
+    },
+    {
+      "say": "칠판에 수가 한 줄씩 번쩍 나타났다 사라져요."
+    },
+    {
+      "say": "보이는 대로 머릿속 주판에 더해요."
+    },
+    {
+      "say": "빠르기는 처음에 직접 골라요. 느리게부터 해도 괜찮아요."
+    },
+    {
+      "say": "같이 해 볼까요?"
+    },
+    {
+      "together": {
+        "rows": 3,
+        "digits": [
+          1,
+          1
+        ],
+        "minus": 0
+      }
+    },
+    {
+      "together": {
+        "rows": 4,
+        "digits": [
+          1,
+          1
+        ],
+        "minus": 0
+      }
+    },
+    {
+      "say": "눈과 머릿속 주판을 같이 써요."
+    }
+  ]
+}
