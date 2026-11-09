@@ -56,7 +56,7 @@ const CASTLE = Object.values(import.meta.glob('../content/backgrounds/castle.web
 /** 화면에 그리는 너비(px). 셀수록 크다 */
 const ART_WIDTH = { slime: 76, bat: 96, mushroom: 70, spider: 90, zombie: 66, skeleton: 66, ghost: 74, goblin: 70, golem: 100, knight: 80, witch: 80, dragon: 124, giant: 100, lava: 104, boss: 116, raven: 98, gargoyle: 104 };
 /** 들어 있는 배경음악 곡 번호(public/music/bgm-N.mp3). 곡을 더하면 여기에 번호를 더한다 */
-const MUSIC_TRACKS = [1, 2, 3];
+const MUSIC_TRACKS = [1, 2, 3, 4];
 const MUSIC_VOLUME = 0.22;
 /** 고유 동작을 하는 때(길의 몇 %). 몬스터 번호로 고른다. 한 마리가 두 번 한다 */
 const ACT_AT = [[0.22, 0.6], [0.34, 0.72], [0.28, 0.52]];
