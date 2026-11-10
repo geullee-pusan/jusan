@@ -547,19 +547,28 @@ export function createDefense(root, io) {
   }
 
   /** 지금 상태에 맞게 음악을 켜거나 끈다. 곡이 바뀌면 줄였다가 바꾼다 */
+  let fadeToken = 0; // 곡 바꾸기가 진행 중일 때 새 명령이 오면 앞의 바꾸기를 그만두게 하는 번호
+  let fadeTarget = 0;
   function musicUpdate() {
     const inGame = Boolean(game && !game.over && !game.paused);
-    const want = Boolean(!data.musicOff && !isSfxMuted() && MUSIC_TRACKS.length && (storyTrack !== null || inGame));
+    const want = Boolean(!document.hidden && !data.musicOff && !isSfxMuted() && MUSIC_TRACKS.length && (storyTrack !== null || inGame));
     if (!want) {
+      // 곡 바꾸기 중이면 그것도 그만둔다(타이머가 끝나며 다시 틀지 않게)
+      fadeToken++;
+      bgmFading = false;
       bgm.pause();
+      bgm.volume = MUSIC_VOLUME;
       return;
     }
     const n = trackFor(storyTrack ?? stageOf(game.level));
-    if (n === bgmTrack) {
-      if (bgm.paused && !bgmFading) playBgm();
+    if (bgmFading && n === fadeTarget) return; // 이미 그 곡으로 바꾸는 중
+    if (n === bgmTrack && !bgmFading) {
+      if (bgm.paused) playBgm();
       return;
     }
     if (bgm.paused || !bgmTrack) {
+      fadeToken++;
+      bgmFading = false;
       bgmTrack = n;
       bgm.src = `./music/bgm-${n}.mp3`;
       bgm.volume = MUSIC_VOLUME;
@@ -567,15 +576,19 @@ export function createDefense(root, io) {
       return;
     }
     // 곡 바꾸기: 0.6초 동안 줄이고, 바꾼 뒤 다시 키운다
+    const my = ++fadeToken;
     bgmFading = true;
+    fadeTarget = n;
     const steps = 6;
     const down = (i) => {
+      if (my !== fadeToken) return;
       bgm.volume = MUSIC_VOLUME * (1 - i / steps);
       if (i < steps) return setTimeout(() => down(i + 1), 100);
       bgmTrack = n;
       bgm.src = `./music/bgm-${n}.mp3`;
       playBgm();
       const up = (j) => {
+        if (my !== fadeToken) return;
         bgm.volume = MUSIC_VOLUME * (j / steps);
         if (j < steps) setTimeout(() => up(j + 1), 100);
         else bgmFading = false;
@@ -585,9 +598,15 @@ export function createDefense(root, io) {
     down(0);
   }
 
-  // 다른 앱으로 가거나 화면이 꺼지면 저절로 멈춘다. 다시 시작은 아이가 누른다.
+  // 다른 앱으로 가거나 화면이 꺼지면 게임은 저절로 멈추고, 음악은 게임이 없어도(이야기 다시 보기 등) 늘 멈춘다.
+  // 다시 시작은 아이가 누른다. 이야기 장면을 보던 중이면 돌아왔을 때 음악도 다시 나온다.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && game && !game.over) setPaused(true);
+    musicUpdate();
+  });
+  window.addEventListener('pagehide', () => {
+    fadeToken++;
+    bgm.pause();
   });
 
   function setPaused(on) {
