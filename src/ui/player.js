@@ -86,6 +86,12 @@ export function createPlayer(ctx) {
         case 'abacus-set':
           abacus.setNumber(scene.value);
           break;
+        case 'abacus-highlight': // 자리 하나를 밝게(자리점 성에서 일·천·백만의 자리를 짚는다). place: null이면 끈다
+          abacus.highlight(scene.place, 'now');
+          break;
+        case 'abacus-labels': // 줄 아래 자리 이름 보이기·숨기기
+          abacus.showLabels(scene.on);
+          break;
         case 'abacus-clear':
           if (scene.quiet) abacus.setup();
           else await abacus.clear();

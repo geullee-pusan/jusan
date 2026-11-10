@@ -3,12 +3,16 @@
 //  mul    한 자리 곱셈(1강, practice.js·lesson.js를 그대로 쓴다)
 //  addsub 덧셈·뺄셈 여러 줄(덧셈·뺄셈 숲, 암산 하늘). mode: see(보고) / listen(듣고) / flash(번쩍) / picture(첫 줄 주판 그림)
 //  tt     곱셈구구 점검(주판 없이)
+//  mul2   두 자리 × 두 자리 곱셈(mul2.js, 근거 docs/research-curriculum.md 9.1절)
+//  place  자리점 성: 화면 주판에 놓인 큰 수 읽기(placeval.js, 근거 9.2절)
 // 정답을 맞히면 바로 칭찬하지 않고, 화면 주판으로 계산 과정을 빠르게 한 번 보여 준 뒤 칭찬한다(2026-11-09 부모 요청).
 import { diagnoseAddSub, makeAddSubProblem } from './addsub.js';
 import { placeName } from './korean.js';
 import { fill, lessonPlan, solveScenes as mulSolveScenes } from './lesson.js';
+import { diagnoseLong, longRound, makeLongProblem } from './mul2.js';
 import { diagnoseMul } from './muldiagnose.js';
 import { readNumber } from './numread.js';
+import { diagnosePlace, makePlaceProblem, placeRound } from './placeval.js';
 import { practiceRound } from './practice.js';
 import { createRng, seedFrom } from './rng.js';
 import { makeTTRound, ttWeights } from './timestable.js';
@@ -43,6 +47,8 @@ const nth = (no) => (no === 'bonus' ? '보너스' : NTH[no] ?? `${no}번째`);
 export function islandRound(script, seed, rounds = []) {
   if (script.kind === 'mul') return practiceRound(seed);
   if (script.kind === 'tt') return { problems: makeTTRound(seed, ttWeights(rounds)), bonus: null };
+  if (script.kind === 'mul2') return longRound(seed);
+  if (script.kind === 'place') return placeRound(seed);
   const used = new Set();
   const problems = [];
   for (let i = 0; i < script.round.count; i++) {
@@ -65,8 +71,21 @@ function rowLines(script, rows, seed) {
  * @param {{flashMs?: number}} options 번쩍 암산의 빠르기(아이가 고른 것)
  */
 export function askScenes(script, problem, no, seed, { flashMs = 1000 } = {}) {
-  if (script.kind === 'mul') {
+  if (script.kind === 'place') {
+    const ask = problem.type === 'digit' ? say(script, 'q-digit', seed, { place: placeName(problem.place) }) : say(script, 'q-read', seed);
     return [
+      { kind: 'abacus-visible', on: true },
+      { kind: 'abacus-clear', quiet: true },
+      { kind: 'abacus-set', value: problem.value },
+      { kind: 'abacus-labels', on: false }, // 자리 이름은 숨긴다: 자리점으로 센다
+      { kind: 'board-clear' },
+      say(script, 'q', seed, { no: nth(no) }),
+      ask,
+    ];
+  }
+  if (script.kind === 'mul' || script.kind === 'mul2') {
+    return [
+      { kind: 'abacus-visible', on: true },
       { kind: 'board-problem', a: problem.a, b: problem.b },
       { kind: 'abacus-clear' },
       say(script, 'q', seed, { no: nth(no), a: read(problem.a), b: read(problem.b) }),
@@ -118,17 +137,78 @@ function addSubSolveScenes(script, problem, seed) {
   return scenes;
 }
 
+const COUNT = ['', '한', '두', '세', '네', '다섯', '여섯'];
+
+/** 두 자리 × 두 자리를 화면 주판으로 풀어 보인다 */
+function longSolveScenes(script, problem, seed) {
+  const sol = problem.solution;
+  const scenes = [
+    { kind: 'abacus-visible', on: true },
+    { kind: 'board-problem', a: sol.a, b: sol.b },
+    say(script, 'problem', seed, { a: read(sol.a), b: read(sol.b) }),
+    { kind: 'abacus-clear', columns: sol.columns, start: sol.startPlace },
+    say(script, 'clear', seed),
+    say(script, 'digits', seed, { da: COUNT[String(sol.a).length], db: COUNT[String(sol.b).length], dt: COUNT[sol.digits], start: placeName(sol.startPlace) }),
+  ];
+  for (const row of sol.rows) {
+    const rowVars = { x: read(row.digit), b: read(sol.b), start: placeName(row.startPlace) };
+    scenes.push(say(script, row.index === 0 ? 'row-first' : 'row-next', seed + row.index, rowVars));
+    for (const p of row.products) {
+      if (p.col > 0 && row.index === 0) scenes.push(say(script, 'shift-col', seed, { tens: placeName(p.tensPlace) }, 'demo'));
+      scenes.push(say(script, 'mul', seed + p.index, { x: read(p.x), y: read(p.y), product: read(p.product) }, 'demo'));
+      if (p.product === 0) scenes.push(say(script, 'zero', seed, {}, 'demo'));
+      else if (p.padded) scenes.push(say(script, 'pad', seed, { pair: `영${read(p.product)}` }, 'demo'));
+      const over = p.steps.find((s) => !s.carry && s.friend !== undefined);
+      if (over) {
+        scenes.push(say(script, over.technique === 'A5' ? 'carry-five' : 'carry', seed, { place: placeName(over.place), add: read(over.add), friend: read(over.friend) }, 'demo'));
+      }
+      scenes.push({ kind: 'abacus-steps', steps: p.steps, tensPlace: p.tensPlace, onesPlace: p.onesPlace });
+    }
+  }
+  scenes.push(say(script, 'answer-is', seed, { answer: read(sol.answer) }));
+  if (String(sol.answer).length < sol.digits) scenes.push(say(script, 'short', seed, { start: placeName(sol.startPlace) }));
+  if (sol.answer >= 1000) scenes.push(say(script, 'comma', seed));
+  scenes.push({ kind: 'board-answer', value: sol.answer });
+  return scenes;
+}
+
+/** 자리점 성: 화면 주판에 놓인 수를 자리점부터 세어 읽어 보인다 */
+function placeSolveScenes(script, problem, seed) {
+  const digits = String(problem.value).length;
+  const scenes = [
+    { kind: 'abacus-visible', on: true },
+    { kind: 'abacus-clear', quiet: true },
+    { kind: 'abacus-set', value: problem.value },
+    { kind: 'board-clear' },
+    { kind: 'abacus-labels', on: true },
+    { kind: 'abacus-highlight', place: 0 },
+    say(script, 'find-ones', seed, {}, 'demo'),
+  ];
+  if (digits > 3) scenes.push({ kind: 'abacus-highlight', place: 3 }, say(script, 'dot-thousand', seed, {}, 'demo'));
+  if (digits > 6) scenes.push({ kind: 'abacus-highlight', place: 6 }, say(script, 'dot-million', seed, {}, 'demo'));
+  if (problem.type === 'digit') {
+    scenes.push({ kind: 'abacus-highlight', place: problem.place }, say(script, 'digit-is', seed, { place: placeName(problem.place), d: read(problem.answer) }, 'demo'));
+  } else {
+    if (problem.features.zero) scenes.push(say(script, 'zero-rod', seed, {}, 'demo'));
+    scenes.push(say(script, 'comma-groups', seed, {}, 'demo'));
+  }
+  scenes.push({ kind: 'board-answer', value: problem.answer }, say(script, 'answer-is', seed, { answer: read(problem.answer) }), { kind: 'abacus-highlight', place: null });
+  return scenes;
+}
+
 /** 같이 풀기(틀렸을 때, "같이 풀어 줘요"를 눌렀을 때, 강의) */
 export function demoScenes(script, problem, seed) {
   if (script.kind === 'mul') return mulSolveScenes(script, problem, seed);
+  if (script.kind === 'mul2') return longSolveScenes(script, problem, seed);
+  if (script.kind === 'place') return placeSolveScenes(script, problem, seed);
   if (script.kind === 'tt') return [say(script, 'tt-tell', seed, { a: read(problem.a), b: read(problem.b), answer: read(problem.answer) }), { kind: 'board-answer', value: problem.answer }];
   return addSubSolveScenes(script, problem, seed);
 }
 
 /** 맞혔을 때: 화면 주판으로 계산 과정을 빠르게 한 번 보여 준다(말 없이) */
 export function replayScenes(script, problem) {
-  if (script.kind === 'tt') return [];
-  const steps = script.kind === 'mul' ? problem.solution.products.flatMap((p) => p.steps) : problem.sim.rowSteps.flat();
+  if (script.kind === 'tt' || script.kind === 'place') return [];
+  const steps = script.kind === 'mul' || script.kind === 'mul2' ? problem.solution.products.flatMap((p) => p.steps) : problem.sim.rowSteps.flat();
   return [{ kind: 'abacus-visible', on: true }, { kind: 'abacus-clear', quiet: true }, { kind: 'abacus-steps', steps, tensPlace: null, onesPlace: null, fast: FAST_MS }];
 }
 
@@ -137,6 +217,8 @@ export function replayScenes(script, problem) {
 function diagnose(script, problem, given) {
   if (script.kind === 'mul') return diagnoseMul(problem.solution, given);
   if (script.kind === 'tt') return { kind: given === problem.answer ? 'correct' : 'wrong' };
+  if (script.kind === 'mul2') return diagnoseLong(problem.solution, given);
+  if (script.kind === 'place') return diagnosePlace(problem, given);
   return diagnoseAddSub(problem, given);
 }
 
@@ -162,6 +244,11 @@ export function answerScenes(script, problem, given, tries, seed) {
       const sol = problem.solution;
       const vars = d.kind === 'product' ? { single: read(sol.single), digit: read(sol.products[d.productIndex].digit) } : {};
       hint = say(script, `hint-${d.kind}`, seed, vars);
+    } else if (script.kind === 'mul2' && d.kind === 'product') {
+      const ps = d.candidates.map((i) => problem.solution.products[i]);
+      hint = ps.length === 1
+        ? say(script, 'hint-product', seed, { x: read(ps[0].x), y: read(ps[0].y) })
+        : say(script, 'hint-product-place', seed, { tens: placeName(ps[0].tensPlace) });
     } else hint = say(script, `hint-${d.kind}`, seed);
     return { correct: false, retry: true, diagnosis: d, scenes: [hint] };
   }
@@ -185,9 +272,11 @@ export function lectureParts(script, seed) {
   script.lecture.forEach((step, i) => {
     if (step.say) current.push({ kind: 'say', key: 'lecture', text: step.say, pose: 'talk' });
     if (step.together) {
-      const p = makeAddSubProblem(seedFrom(script.id, 'lecture', seed, i), step.together);
+      const s2 = seedFrom(script.id, 'lecture', seed, i);
+      const p = script.kind === 'mul2' ? makeLongProblem(s2, step.together) : script.kind === 'place' ? makePlaceProblem(s2, step.together) : makeAddSubProblem(s2, step.together);
       parts.push(current);
-      current = [...addSubSolveScenes(script, p, seed + i), say(script, 'follow-check', seed + i), { kind: 'wait', prompt: 'follow' }];
+      const solve = script.kind === 'addsub' ? addSubSolveScenes(script, p, seed + i) : demoScenes(script, p, seed + i);
+      current = [...solve, say(script, 'follow-check', seed + i), { kind: 'wait', prompt: 'follow' }];
       parts.push(current);
       current = [];
     }

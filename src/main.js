@@ -498,7 +498,8 @@ async function solveOne(script, problem, no, seed, timer, opts) {
     await player.play(res.scenes);
     if (res.correct) return { correct: true, firstTry: tries === 1, miss };
     if (!res.retry) return { correct: false, firstTry: false, miss };
-    if (script.kind !== 'tt' && script.mode !== 'listen' && script.mode !== 'flash') await player.play([{ kind: 'abacus-clear' }]);
+    // 자리점 성은 화면 주판의 수를 다시 읽어야 하니 털지 않는다
+    if (script.kind !== 'tt' && script.kind !== 'place' && script.mode !== 'listen' && script.mode !== 'flash') await player.play([{ kind: 'abacus-clear' }]);
     if (script.mode === 'listen' || script.mode === 'flash') await player.play(ask()); // 다시 들려주고 다시 보여 준다
   }
   return { correct: false, firstTry: false, miss };
@@ -608,6 +609,7 @@ async function startPlay(islandId, mode) {
   board.clear();
   setAbacusVisible(true);
   abacus.setup();
+  abacus.showLabels(true);
   player.reset();
   await teacher.standUp();
   try {

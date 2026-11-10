@@ -7,6 +7,7 @@
 //  board-list     칠판에 문제 여러 개 { items: [{ no, a, b }] }
 //  abacus-clear   화면 주판 털기 { columns, start }
 //  abacus-steps   화면 주판에 알 움직이기 { steps, tensPlace, onesPlace }
+//  abacus-highlight 자리 하나 밝게 { place }(null이면 끈다), abacus-labels 자리 이름 보이기 { on }
 //  wait           아이가 "다 했어요" 할 때까지 { prompt }
 //  nod, fall      끄덕이기, 쓰러지기
 import { diagnoseMul } from './muldiagnose.js';

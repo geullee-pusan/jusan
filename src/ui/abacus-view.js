@@ -139,6 +139,10 @@ export function createAbacus(root) {
       values[i] = value;
       draw(i);
     },
+    /** 줄 아래 자리 이름(일·십·백·천·만)을 보이거나 숨긴다. 자리점 성에서는 아이가 자리점으로 세도록 숨긴다 */
+    showLabels(on) {
+      labels.style.visibility = on ? 'visible' : 'hidden';
+    },
     /** 수 하나를 그대로 놓는다(머릿속 주판의 첫 줄 그림) */
     setNumber(n) {
       this.setup();

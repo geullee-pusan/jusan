@@ -18,9 +18,14 @@ export const SKILLS = [
   { id: 'zero-pad', group: '곱셈', name: '한 자리 곱에 영 붙이기', island: 'mul-1digit' },
   { id: 'zero-zero', group: '곱셈', name: '곱이 영일 때 영영', island: 'mul-1digit' },
   { id: 'mul-carry', group: '곱셈', name: '곱을 더할 때 앞자리로 올리기', island: 'mul-1digit' },
+  { id: 'mul2-shift', group: '곱셈', name: '두 자리 × 두 자리: 시작 자리 옮기기', island: 'mul-2x2' },
+  { id: 'mul2-carry', group: '곱셈', name: '두 자리 × 두 자리: 더할 때 올리기', island: 'mul-2x2' },
   { id: 'mind-picture', group: '암산', name: '머릿속 주판', island: 'mental-1' },
   { id: 'mind-listen', group: '암산', name: '듣고 하는 암산', island: 'mental-2' },
   { id: 'mind-flash', group: '암산', name: '번쩍 암산', island: 'mental-3' },
+  { id: 'dec-read', group: '자리점', name: '자리점부터 세어 큰 수 읽기', island: 'dec-1' },
+  { id: 'dec-zero', group: '자리점', name: '가운데 영이 있는 수 읽기', island: 'dec-1' },
+  { id: 'dec-place', group: '자리점', name: '자리 이름으로 숫자 찾기', island: 'dec-1' },
 ];
 
 /** 상태를 정하는 값(SPEC 6.2절 초안). 최근 몇 번을 보고, 몇 번 맞혀야 "됨"인가 */
@@ -35,10 +40,14 @@ const TECH_TO_SKILL = {
 /** 틀린 이유(짐작)가 어느 기술 탓인지. 없으면 그 문제의 모든 기술 탓으로 본다 */
 const MISS_TO_SKILLS = {
   'no-pad': ['zero-pad'],
-  'no-carry': ['mul-carry'],
-  place: ['mul-place'],
+  'no-carry': ['mul-carry', 'mul2-carry'],
+  place: ['mul-place', 'mul2-shift'],
+  'no-shift': ['mul2-shift'],
   carry: ['friend-add', 'friend-sub', 'chain'],
   five: ['five-add', 'five-sub', 'both'],
+  shift: ['dec-read'],
+  'zero-drop': ['dec-zero'],
+  neighbor: ['dec-place'],
 };
 
 /**
@@ -57,6 +66,16 @@ export function skillsOfResult(lesson, result) {
     if (f.padded) out.add('zero-pad');
     if (f.zeroProduct) out.add('zero-zero');
     if (f.carry) out.add('mul-carry');
+  } else if (lesson === 'mul-2x2') {
+    out.add('mul2-shift');
+    if (f.carry) out.add('mul2-carry');
+  } else if (lesson === 'dec-1') {
+    // 자리 숫자 문제는 features.place가 있다. 읽기 문제는 없다
+    if (f.place !== undefined) out.add('dec-place');
+    else {
+      out.add('dec-read');
+      if (f.zero) out.add('dec-zero');
+    }
   } else if (Array.isArray(f.techniques)) {
     for (const t of f.techniques) if (TECH_TO_SKILL[t]) out.add(TECH_TO_SKILL[t]);
     if (lesson === 'add-6') out.add('many-rows');
