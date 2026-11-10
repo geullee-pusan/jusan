@@ -6,7 +6,7 @@
 // 설정: outfit(입힌 꾸미기 id 목록), teacherName
 
 const KEY = 'jusan:v1';
-const EMPTY = { rounds: [], outfit: [], teacherName: '큐브 선생님', flashMs: null, defense: {}, defenseSettings: null, musicOff: false, storySeen: [] };
+const EMPTY = { rounds: [], outfit: [], teacherName: '큐브 선생님', flashMs: null, defense: {}, defenseSettings: null, musicOff: false, micOff: false, storySeen: [] };
 
 export function loadData() {
   try {
@@ -23,6 +23,7 @@ export function loadData() {
       // 배경음악은 처음부터 켜져 있다. 🎵로 직접 끈 때만 꺼 둔다(예전 판이 적어 둔 defenseMusic: false는 보지 않는다)
       musicOff: data.musicOff === true,
       storySeen: Array.isArray(data.storySeen) ? data.storySeen : [],
+      micOff: data.micOff === true,
     };
   } catch {
     return structuredClone(EMPTY);

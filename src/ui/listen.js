@@ -65,3 +65,57 @@ export function stopListening() {
   }
   current = null;
 }
+
+/**
+ * 길게 듣는다(성 지키기처럼 내내 들을 때). 마이크를 한 번 켜 두고 숫자를 여러 번 듣는다.
+ * 짧게 끊어 다시 켜면 안드로이드가 그때마다 배경음악을 줄이거나 멈춰서 음악이 끊긴다(2026-11-10 태블릿에서 확인).
+ * 브라우저가 스스로 끝내거나 maxMs가 지나거나 stopListening()을 부르면 끝난다.
+ * @param {{onInterim?: (text: string) => void, onFinal?: (texts: string[]) => void, maxMs?: number}} options
+ * @returns {Promise<{ended: true} | {error: string}>}
+ */
+export function listenStream({ onInterim, onFinal, maxMs = 60000 } = {}) {
+  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Rec) return Promise.resolve({ error: 'unsupported' });
+  stopListening();
+  return new Promise((resolve) => {
+    const rec = new Rec();
+    current = rec;
+    rec.lang = 'ko-KR';
+    rec.interimResults = true;
+    rec.continuous = true;
+    rec.maxAlternatives = 5;
+    let done = false;
+    const finish = (result) => {
+      if (done) return;
+      done = true;
+      clearTimeout(limit);
+      if (current === rec) current = null;
+      try {
+        rec.abort();
+      } catch {
+        // 이미 멈췄다
+      }
+      resolve(result);
+    };
+    const limit = setTimeout(() => finish({ ended: true }), maxMs);
+    rec.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const texts = [...result].map((alt) => alt.transcript);
+        if (result.isFinal) onFinal?.(texts);
+        else onInterim?.(texts[0] ?? '');
+      }
+    };
+    rec.onerror = (event) => {
+      const error = event.error || 'error';
+      // 조용해서 생기는 no-speech는 끝난 것으로 본다(다시 켠다)
+      finish(error === 'no-speech' || error === 'aborted' ? { ended: true } : { error });
+    };
+    rec.onend = () => finish({ ended: true });
+    try {
+      rec.start();
+    } catch {
+      finish({ error: 'start-failed' });
+    }
+  });
+}

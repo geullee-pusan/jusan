@@ -9,7 +9,7 @@ import { pickSpokenNumber } from '../core/numhear.js';
 import { replayable, sceneOnLevelUp, sceneOnStart } from '../core/story.js';
 import story from '../content/story.json';
 import { createStoryView } from './story-view.js';
-import { listenOnce, listenSupported, stopListening } from './listen.js';
+import { listenStream, listenSupported, stopListening } from './listen.js';
 import { audioContext, isSfxMuted, sfx } from './sfx.js';
 
 const fmt = (n) => n.toLocaleString('ko-KR');
@@ -103,6 +103,7 @@ export function createDefense(root, io) {
         <span>무찌름 <b id="def-count">0</b></span>
         <button class="block-btn small" data-d="pause">⏸️ 멈춤</button>
         <button class="block-btn small" data-d="music">🎵 끔</button>
+        <button class="block-btn small" data-d="mic">🎤 켬</button>
         <button class="block-btn small red" data-d="quit">그만</button>
       </div>
       <div class="def-field" id="def-field">
@@ -237,6 +238,7 @@ export function createDefense(root, io) {
     requestAnimationFrame(frame);
     listenLoop();
     renderMusicButton();
+    renderMicButton();
     musicUpdate();
     const sid = sceneOnStart(settings.startLevel, data.storySeen ?? []);
     if (sid) runStory(sid);
@@ -433,25 +435,37 @@ export function createDefense(root, io) {
       return;
     }
     const my = game;
+    const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
     while (game === my && !my.over) {
-      if (my.paused) {
-        mic.textContent = '⏸️ 멈춤';
-        await new Promise((ok) => setTimeout(ok, 300));
+      if (my.paused || data.micOff) {
+        mic.textContent = data.micOff ? '⌨️ 마이크 끔 · 숫자판으로 넣어요' : '⏸️ 멈춤';
+        await pause(300);
         continue;
       }
       mic.textContent = '🎤 듣고 있어요…';
-      const r = await listenOnce({ timeoutMs: 8000, onInterim: (t) => ($('#def-heard').textContent = t) });
+      const started = performance.now();
+      let heard = false;
+      // 마이크를 길게 켜 둔다. 자주 껐다 켜면 안드로이드에서 배경음악이 끊긴다
+      const r = await listenStream({
+        onInterim: (t) => ($('#def-heard').textContent = t),
+        onFinal: (texts) => {
+          heard = true;
+          if (game !== my || my.over || my.paused) return;
+          const n = pickSpokenNumber(texts);
+          if (n !== null) {
+            $('#def-show').textContent = fmt(n);
+            submit(n);
+          }
+        },
+      });
       if (game !== my || my.over) return;
       if (r.error === 'not-allowed' || r.error === 'service-not-allowed') {
         mic.textContent = '⌨️ 마이크를 쓸 수 없어요. 숫자판으로 넣어요';
         return;
       }
-      if (r.error && r.error !== 'no-speech' && r.error !== 'aborted') await new Promise((ok) => setTimeout(ok, 1000));
-      const n = r.texts ? pickSpokenNumber(r.texts) : null;
-      if (n !== null) {
-        $('#def-show').textContent = fmt(n);
-        submit(n);
-      }
+      // 다시 켜기 전에 잠깐 쉰다. 아무 말 없이 금방 끝났으면 조금 더 쉰다
+      const quick = performance.now() - started < 3000;
+      await pause(r.error ? 1500 : heard ? 200 : quick ? 1500 : 500);
     }
   }
 
@@ -522,6 +536,10 @@ export function createDefense(root, io) {
   function trackFor(stage) {
     const ok = MUSIC_TRACKS.filter((n) => n <= stage);
     return ok.length ? ok.at(-1) : MUSIC_TRACKS[0];
+  }
+
+  function renderMicButton() {
+    root.querySelector('[data-d=mic]').textContent = data.micOff ? '🎤 끔' : '🎤 켬';
   }
 
   function renderMusicButton() {
@@ -630,6 +648,15 @@ export function createDefense(root, io) {
     if (act === 'start' || act === 'again') start();
     if (act === 'pause') setPaused(!game?.paused);
     if (act === 'story') runStory(e.target.closest('[data-id]').dataset.id, { defeated: data.defense?.heroDefeated ?? 0 }).then(() => renderSetup());
+    if (act === 'mic') {
+      // 마이크를 끄면 숫자판으로만 답한다(배경음악이 끊기지 않는다)
+      data.micOff = !data.micOff;
+      const saved = io.load();
+      saved.micOff = data.micOff;
+      io.save(saved);
+      renderMicButton();
+      if (data.micOff) stopListening();
+    }
     if (act === 'music') {
       data.musicOff = !data.musicOff;
       const saved = io.load();
