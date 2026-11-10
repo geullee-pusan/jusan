@@ -70,6 +70,9 @@ test('후보 중 숫자로 바뀌는 첫 후보를 쓴다', () => {
 test('짧은 대답과 명령', () => {
   assert.equal(parseSpokenCommand('네'), 'yes');
   assert.equal(parseSpokenCommand('아니요'), 'no');
+  // 네·아니요를 여러 말로(안드로이드는 "네"를 "내"로 듣기도 한다)
+  for (const t of ['내', '넵', '예', '응', '좋아요', '풀래요', '할래', '해볼래요', '네 풀래요', '오케이']) assert.equal(parseSpokenCommand(t), 'yes', t);
+  for (const t of ['아니', '아뇨', '싫어요', '안 할래요', '안 풀래', '괜찮아요', '됐어요']) assert.equal(parseSpokenCommand(t), 'no', t);
   assert.equal(parseSpokenCommand('다 했어요'), 'done');
   assert.equal(parseSpokenCommand('다시 말해 주세요'), 'again');
   assert.equal(parseSpokenCommand('그만할래요'), 'stop');

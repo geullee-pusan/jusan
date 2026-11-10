@@ -120,6 +120,7 @@ app.innerHTML = `
       <span id="speeds" class="speeds" hidden></span>
       <button class="block-btn green" data-act="yes" hidden>네</button>
       <button class="block-btn red" data-act="no" hidden>아니요</button>
+      <span class="yesno-hint" id="yesno-hint" hidden>🎤 "네" 또는 "아니요"라고 말해도 돼요</span>
       <button class="block-btn green big" data-act="done" hidden>다 했어요</button>
       <button class="block-btn green big" data-act="again-round" hidden>한 판 더</button>
       <button class="block-btn big" data-act="back-map" hidden>지도로</button>
@@ -316,6 +317,8 @@ let choice = null;
 function askYesNo() {
   show('yes', true);
   show('no', true);
+  // 말로도 답할 수 있다고 알려 준다(음성 인식이 되는 기기에서만)
+  $('#yesno-hint').hidden = !listenSupported();
   return new Promise((resolve) => {
     let done = false;
     const finish = (v) => {
@@ -323,6 +326,7 @@ function askYesNo() {
       done = true;
       show('yes', false);
       show('no', false);
+      $('#yesno-hint').hidden = true;
       choice = null;
       stopListening();
       resolve(v);

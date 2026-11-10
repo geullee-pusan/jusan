@@ -521,3 +521,4 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 /* 장면 전체 그림(A2, A5): 잘리지 않게 다 보여 주고(위쪽에 맞춤), 남는 곳은 같은 그림을 흐리게 */
 .story-layer.full-art { background-size: contain; background-position: center 12%; background-color: transparent; }
 .story-stage.blurfill::before { content: ''; position: absolute; inset: -30px; background: var(--fill) center / cover no-repeat; filter: blur(16px) brightness(.75); }
+.yesno-hint { align-self: center; font-size: .85em; color: var(--ink); background: rgba(255, 255, 255, .9); border: 2px solid #222; border-radius: 4px; padding: 2px 8px; }

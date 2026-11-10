@@ -89,8 +89,9 @@ export function pickSpokenNumber(candidates) {
 /** "네", "아니요" 같은 짧은 대답과 명령 */
 export function parseSpokenCommand(text) {
   const s = strip(text ?? '');
-  if (/^(네|예|응|맞아|맞아요|맞습니다)/.test(s)) return 'yes';
-  if (/^(아니|아뇨|틀려)/.test(s)) return 'no';
+  // 네·아니요(2026-11-10 넓힘): 안드로이드는 "네"를 "내"로 자주 알아듣고, 아이는 "할래", "싫어"처럼도 답한다
+  if (/^(아니|아뇨|틀려|싫어|싫|안할래|안해|안풀래|안볼래|됐어|괜찮아|노)/.test(s)) return 'no';
+  if (/^(네|내|넵|넹|예|응|웅|맞아|맞아요|맞습니다|그래|좋아|할래|할게|풀래|풀게|해볼래|해볼게|볼래|오케이|ok|okay|yes)/i.test(s)) return 'yes';
   if (/(다했|다놨|다풀|끝났|했어)/.test(s)) return 'done';
   if (/(다시|한번더)/.test(s)) return 'again';
   if (/(천천히)/.test(s)) return 'slower';
