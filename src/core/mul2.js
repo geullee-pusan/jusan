@@ -59,25 +59,40 @@ export function longFeatures(solution) {
     zeroProduct: solution.products.some((p) => p.product === 0),
     carry: steps.some((s) => ['A4', 'A5', 'A6'].includes(s.technique)),
     shortAnswer: String(solution.answer).length < solution.digits,
+    // 가운데 0(604 × 15처럼, 연맹 36·38쪽): 앞 수나 뒤 수의 가운데·끝에 0
+    zeroInA: /0/.test(String(solution.a).slice(1)),
+    zeroInB: /0/.test(String(solution.b).slice(1)),
+    answerDigits: String(solution.answer).length,
     techniques: [...new Set(steps.map((s) => s.technique))],
   };
 }
 
+/** 정해진 문제 하나(강의의 예) */
+export function longProblemOf(a, b) {
+  const solution = multiplyLong(a, b);
+  return { kind: 'mul2', a, b, key: `${a}x${b}`, answer: solution.answer, solution, features: longFeatures(solution) };
+}
+
+/** 강의에서 예로 쓰는 연맹 문제(판에는 내지 않는다) */
+const LONG_LECTURE = new Set(['604x15', '63x476', '32x406']);
+
 /**
- * 조건에 맞는 두 자리 × 두 자리 문제 하나.
+ * 조건에 맞는 곱셈 문제 하나(기본은 두 자리 × 두 자리, da·db로 자릿수를 바꾼다).
  * @param {number} seed
  * @param {{need?: {carry?: boolean, padded?: boolean, zeroProduct?: boolean}, avoid?: Set<string>}} spec
  *   need의 값: true면 꼭 있고, false면 없다. 빠지면 상관없다.
  */
-export function makeLongProblem(seed, { need = {}, avoid = new Set() } = {}) {
+export function makeLongProblem(seed, { need = {}, avoid = new Set(), da = 2, db = 2 } = {}) {
   const rng = createRng(seed);
-  for (let attempt = 0; attempt < 5000; attempt++) {
-    const a = randInt(rng, 11, 99);
-    const b = randInt(rng, 11, 99);
+  for (let attempt = 0; attempt < 20000; attempt++) {
+    // 두 자리 × 두 자리는 처음 연 때와 같은 차례로 뽑는다(같은 시드면 같은 문제)
+    const a = da === 2 ? randInt(rng, 11, 99) : randInt(rng, 10 ** (da - 1) + 1, 10 ** da - 1);
+    const b = db === 2 ? randInt(rng, 11, 99) : randInt(rng, 10 ** (db - 1) + 1, 10 ** db - 1);
+    if (da + db > 4 && (a % 100 === 0 || b % 100 === 0)) continue; // 600 × 15처럼 영이 겹치면 너무 쉽다
     if (a % 10 === 0 && b % 10 === 0) continue; // 둘 다 영으로 끝나면 너무 쉽다
     if (a % 11 === 0 && b % 11 === 0) continue;
     const key = `${a}x${b}`;
-    if (avoid.has(key)) continue;
+    if (avoid.has(key) || LONG_LECTURE.has(key)) continue;
     const solution = multiplyLong(a, b);
     const f = longFeatures(solution);
     if (Object.entries(need).every(([name, want]) => want === undefined || f[name] === want)) {
@@ -85,6 +100,20 @@ export function makeLongProblem(seed, { need = {}, avoid = new Set() } = {}) {
     }
   }
   throw new Error(`조건에 맞는 문제를 찾지 못했어요: ${JSON.stringify(need)}`);
+}
+
+/**
+ * 대본에 적힌 문제 차례(specs: { da, db, need })로 한 판을 만든다(큰 곱셈).
+ */
+export function longRoundFrom(id, specs, bonusSpec, seed) {
+  const used = new Set();
+  const problems = specs.map((spec, i) => {
+    const p = makeLongProblem(seedFrom(id, seed, i), { ...spec, avoid: used });
+    used.add(p.key);
+    return p;
+  });
+  const bonus = bonusSpec ? makeLongProblem(seedFrom(id, 'bonus', seed), { ...bonusSpec, avoid: used }) : null;
+  return { problems, bonus };
 }
 
 /** 한 판의 문제 차례: 쉬운 것 → 어려운 것 */

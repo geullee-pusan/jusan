@@ -8,10 +8,10 @@
 //  div    나눗셈 바다: 상제법 두 자리 ÷ 한 자리(divide.js, 근거 9.3절)
 // 정답을 맞히면 바로 칭찬하지 않고, 화면 주판으로 계산 과정을 빠르게 한 번 보여 준 뒤 칭찬한다(2026-11-09 부모 요청).
 import { diagnoseAddSub, makeAddSubProblem } from './addsub.js';
-import { diagnoseDiv, divProblemOf, divRound, makeDivProblem } from './divide.js';
+import { diagnoseDiv, divProblemOf, divRound, divRoundFrom, makeDivProblem } from './divide.js';
 import { placeName } from './korean.js';
 import { fill, lessonPlan, solveScenes as mulSolveScenes } from './lesson.js';
-import { diagnoseLong, longRound, makeLongProblem } from './mul2.js';
+import { diagnoseLong, longProblemOf, longRound, longRoundFrom, makeLongProblem } from './mul2.js';
 import { diagnoseMul } from './muldiagnose.js';
 import { readNumber } from './numread.js';
 import { diagnosePlace, makePlaceProblem, placeRound } from './placeval.js';
@@ -49,9 +49,10 @@ const nth = (no) => (no === 'bonus' ? '보너스' : NTH[no] ?? `${no}번째`);
 export function islandRound(script, seed, rounds = []) {
   if (script.kind === 'mul') return practiceRound(seed);
   if (script.kind === 'tt') return { problems: makeTTRound(seed, ttWeights(rounds)), bonus: null };
-  if (script.kind === 'mul2') return longRound(seed);
+  // 대본에 문제 차례(problems)가 있으면 그것으로 만든다(큰 곱셈, 큰 수 나누기, 두 자리로 나누기)
+  if (script.kind === 'mul2') return script.problems ? longRoundFrom(script.id, script.problems, script.bonusProblem, seed) : longRound(seed);
   if (script.kind === 'place') return placeRound(seed);
-  if (script.kind === 'div') return divRound(seed);
+  if (script.kind === 'div') return script.problems ? divRoundFrom(script.id, script.problems, script.bonusProblem, seed) : divRound(seed);
   const used = new Set();
   const problems = [];
   for (let i = 0; i < script.round.count; i++) {
@@ -227,22 +228,37 @@ function divSolveScenes(script, problem, seed) {
   const last = sol.rounds.length - 1;
   sol.rounds.forEach((r, i) => {
     if (r.leading) return; // 앞자리로 나눌 수 없으면 다음 숫자와 함께 본다(규칙 2)
-    const vars = { b, look: read(r.look), left: read(r.left), q: read(r.q), product: read(r.product) };
+    const vars = { b, look: read(r.look), left: read(r.left), front: read(r.front), q: read(r.q), product: read(r.product) };
     if (r.q === 0) {
       scenes.push(say(script, 'zero-q', seed + i, vars, 'demo'));
       return;
     }
+    const two = sol.divisorDigits.length > 1; // 두 자리로 나누기: 임시 몫을 어림하고 고친다
     scenes.push({ kind: 'abacus-highlight', place: r.quotientPlace });
     scenes.push(say(script, r.rule === 1 ? 'rule1' : 'rule2', seed + i, vars, 'demo'));
-    scenes.push(say(script, 'q-pick', seed + i, vars, 'demo'));
-    scenes.push({ kind: 'abacus-steps', steps: r.steps.filter((s) => s.quotient), tensPlace: null, onesPlace: null });
-    scenes.push(say(script, 'times', seed + i, vars, 'demo'));
-    if (r.padded) scenes.push(say(script, 'pad', seed + i, { pair: `영${read(r.product)}` }, 'demo'));
-    const subs = r.steps.filter((s) => !s.quotient);
-    const friend = subs.find((s) => !s.borrow && s.friend !== undefined);
-    if (friend) scenes.push(say(script, 'borrow', seed + i, { friend: read(friend.friend) }, 'demo'));
-    else if (subs.some((s) => s.technique === 'B3')) scenes.push(say(script, 'five-sub', seed + i, {}, 'demo'));
-    scenes.push({ kind: 'abacus-steps', steps: subs, tensPlace: r.place + 1, onesPlace: r.place });
+    if (!two) scenes.push(say(script, 'q-pick', seed + i, vars, 'demo'));
+    else {
+      const ev = { d0: read(sol.divisorDigits[0]), top2: read(r.top2), est: read(r.est) };
+      scenes.push(say(script, r.capped ? 'est-cap' : 'est', seed + i, ev, 'demo'));
+    }
+    for (const a of r.actions) {
+      if (a.type === 'set') {
+        scenes.push({ kind: 'abacus-steps', steps: a.steps, tensPlace: null, onesPlace: null });
+      } else if (a.type === 'sub') {
+        const av = { q: read(a.q), b, dk: read(a.digit), product: read(a.product) };
+        scenes.push(say(script, !two ? 'times' : a.k === 0 ? 'times-first' : 'times-next', seed + i + a.k, av, 'demo'));
+        if (a.padded) scenes.push(say(script, 'pad', seed + i, { pair: `영${read(a.product)}` }, 'demo'));
+        const friend = a.steps.find((x) => !x.borrow && x.friend !== undefined);
+        if (friend) scenes.push(say(script, 'borrow', seed + i, { friend: read(friend.friend) }, 'demo'));
+        else if (a.steps.some((x) => x.technique === 'B3')) scenes.push(say(script, 'five-sub', seed + i, {}, 'demo'));
+        scenes.push({ kind: 'abacus-steps', steps: a.steps, tensPlace: a.tens, onesPlace: a.tens - 1 });
+      } else if (a.type === 'cant') {
+        scenes.push(say(script, 'cant', seed + i + a.q, { q: read(a.q), dk: read(a.digit), product: read(a.product) }, 'demo'));
+      } else if (a.type === 'revise') {
+        scenes.push(say(script, 'revise', seed + i + a.to, { from: read(a.from), to: read(a.to), back: read(a.back) }, 'demo'));
+        scenes.push({ kind: 'abacus-steps', steps: a.steps, tensPlace: null, onesPlace: null });
+      }
+    }
     if (i < last) scenes.push(say(script, r.rest > 0 ? 'rest' : 'rest-zero', seed + i, { b, rest: read(r.rest) }, 'demo'));
   });
   scenes.push(
@@ -345,7 +361,7 @@ export function lectureParts(script, seed) {
     if (step.together) {
       const s2 = seedFrom(script.id, 'lecture', seed, i);
       const t = step.together;
-      const p = script.kind === 'mul2' ? makeLongProblem(s2, t)
+      const p = script.kind === 'mul2' ? (t.a ? longProblemOf(t.a, t.b) : makeLongProblem(s2, t))
         : script.kind === 'place' ? makePlaceProblem(s2, t)
           : script.kind === 'div' ? (t.a ? divProblemOf(t.a, t.b) : makeDivProblem(s2, t))
             : makeAddSubProblem(s2, t);

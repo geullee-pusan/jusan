@@ -20,8 +20,14 @@ export const SKILLS = [
   { id: 'mul-carry', group: '곱셈', name: '곱을 더할 때 앞자리로 올리기', island: 'mul-1digit' },
   { id: 'mul2-shift', group: '곱셈', name: '두 자리 × 두 자리: 시작 자리 옮기기', island: 'mul-2x2' },
   { id: 'mul2-carry', group: '곱셈', name: '두 자리 × 두 자리: 더할 때 올리기', island: 'mul-2x2' },
+  { id: 'big-mul', group: '곱셈', name: '세 자리 × 두 자리 끝까지', island: 'mul-big' },
+  { id: 'big-zero', group: '곱셈', name: '가운데 영이 있는 곱셈(영영)', island: 'mul-big' },
   { id: 'div-rule1', group: '나눗셈', name: '나눌 수 있으면 두 줄 왼쪽에 몫', island: 'div-1' },
   { id: 'div-rule2', group: '나눗셈', name: '나눌 수 없으면 두 자리 보고 한 줄 왼쪽에 몫', island: 'div-1' },
+  { id: 'div-long', group: '나눗셈', name: '세·네 자리 몫 끝까지 세우기', island: 'div-2' },
+  { id: 'div-zero', group: '나눗셈', name: '몫 가운데 영 비워 두기', island: 'div-2' },
+  { id: 'div-est', group: '나눗셈', name: '두 자리로 나눌 때 임시 몫 세우기', island: 'div-3' },
+  { id: 'div-revise', group: '나눗셈', name: '임시 몫 고치기', island: 'div-3' },
   { id: 'mind-picture', group: '암산', name: '머릿속 주판', island: 'mental-1' },
   { id: 'mind-listen', group: '암산', name: '듣고 하는 암산', island: 'mental-2' },
   { id: 'mind-flash', group: '암산', name: '번쩍 암산', island: 'mental-3' },
@@ -41,12 +47,12 @@ const TECH_TO_SKILL = {
 
 /** 틀린 이유(짐작)가 어느 기술 탓인지. 없으면 그 문제의 모든 기술 탓으로 본다 */
 const MISS_TO_SKILLS = {
-  'no-pad': ['zero-pad'],
   'no-carry': ['mul-carry', 'mul2-carry'],
-  place: ['mul-place', 'mul2-shift', 'div-rule1', 'div-rule2'],
-  over: ['div-rule1', 'div-rule2'],
-  under: ['div-rule1', 'div-rule2'],
-  'no-shift': ['mul2-shift'],
+  place: ['mul-place', 'mul2-shift', 'big-mul', 'div-rule1', 'div-rule2', 'div-long', 'div-est'],
+  over: ['div-rule1', 'div-rule2', 'div-long', 'div-est', 'div-revise'],
+  under: ['div-rule1', 'div-rule2', 'div-long', 'div-est'],
+  'no-shift': ['mul2-shift', 'big-mul'],
+  'no-pad': ['zero-pad', 'big-zero'],
   carry: ['friend-add', 'friend-sub', 'chain'],
   five: ['five-add', 'five-sub', 'both'],
   shift: ['dec-read'],
@@ -73,6 +79,15 @@ export function skillsOfResult(lesson, result) {
   } else if (lesson === 'mul-2x2') {
     out.add('mul2-shift');
     if (f.carry) out.add('mul2-carry');
+  } else if (lesson === 'mul-big') {
+    out.add('big-mul');
+    if (f.zeroInA || f.zeroInB || f.zeroProduct) out.add('big-zero');
+  } else if (lesson === 'div-2') {
+    out.add('div-long');
+    if (f.zeroQuotient) out.add('div-zero');
+  } else if (lesson === 'div-3') {
+    out.add('div-est');
+    if (f.revise) out.add('div-revise');
   } else if (lesson === 'div-1') {
     if (f.rule1) out.add('div-rule1');
     if (f.rule2) out.add('div-rule2');
