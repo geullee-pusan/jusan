@@ -12,7 +12,7 @@
 
 ## 지금 목표
 - 열린 섬은 17개다(SPEC 0.3a): 1강 한 자리 곱셈과, 강의 없이 조사 문서로 만든 덧셈·뺄셈 숲 6섬, 곱셈구구 점검, 암산 하늘 3섬, 곱셈 산 "두 자리 × 두 자리"·"큰 곱셈", 자리점 성 "큰 수와 쉼표", 나눗셈 바다 "한 자리로 나누기"·"큰 수 나누기"·"두 자리로 나누기"(상제법, 공개 교본, research-curriculum 9절). 닫힌 섬은 소수 하나다.
-- 방법은 공개 교본의 표준 방식으로 서로 이어지게 정한다: 덧뺄셈(친구수·5의 짝) → 곱셈(두 칸 곱, 앞자리부터) → 자리점(일의 자리 점) → 나눗셈(상제법). 맞출 학원 방식은 없다. 방법은 지어내지 않는다. 큰 곱셈, 두 자리로 나누기, 소수 같은 섬은 조사 문서에 출처를 적은 뒤 연다.
+- 방법은 공개 교본의 표준 방식으로 서로 이어지게 정한다: 덧뺄셈(친구수·5의 짝) → 곱셈(두 칸 곱, 앞자리부터) → 자리점(일의 자리 점) → 나눗셈(상제법). 맞출 학원 방식은 없다. 방법은 지어내지 않는다. 소수처럼 아직 닫힌 섬은 조사 문서에 출처를 적은 뒤 연다.
 - 1강 "한 자리 곱셈"을 완성도 있게 돌리는 것이 1차 목표였다(SPEC 0장). **문제 풀기가 중심이고, 강의는 "강의 보기"로 필요할 때만 본다.** 다른 강을 더할 때도 이 틀(`lessons/` 대본 + `practice.js` 판 + `lesson.js` 강의 장면)을 따른다.
 - 강의 대사는 그대로 옮기지 않는다. 받아 적은 강의(`assets/lesson-notes/`, git에 넣지 않음)에서 흐름과 방법만 가져와 새로 쓴다.
 - 개발 서버에서 `?fast`를 붙이고 소리를 끄면 수업을 빨리 돌려 볼 수 있다.
@@ -80,7 +80,7 @@
 
 ## 폴더
 - `docs/`: 기획(`SPEC.md`)과 조사(`research-curriculum.md`)
-- `src/core/`: 섬 엔진(`islands.js`: 섬마다 판·문제 내기·답 듣기·같이 풀기·강의), 덧셈·뺄셈 여러 줄(`addsub.js`), 곱셈구구(`timestable.js`), 1강 판(`practice.js`), 배지·꾸미기·기록(`badges.js`), 주판 모델·덧셈 기법(`abacus.js`), 곱셈 단계(`multiply.js`), 곱셈 문제(`mulproblems.js`), 오답 짐작(`muldiagnose.js`), 수업 장면(`lesson.js`), 숫자 읽기(`numread.js`), 들은 말 → 숫자(`numhear.js`), 조사·자리 이름(`korean.js`), 시드 난수(`rng.js`)
+- `src/core/`: 섬 엔진(`islands.js`: 섬마다 판·문제 내기·답 듣기·같이 풀기·강의), 덧셈·뺄셈 여러 줄(`addsub.js`), 곱셈구구(`timestable.js`), 1강 판(`practice.js`), 배지·꾸미기·기록(`badges.js`), 주판 모델·덧셈 기법(`abacus.js`), 곱셈 단계(`multiply.js`, 여러 자리 × 여러 자리는 `mul2.js`), 나눗셈 상제법(`divide.js`), 큰 수 읽기(`placeval.js`), 곱셈 문제(`mulproblems.js`), 오답 짐작(`muldiagnose.js`), 수업 장면(`lesson.js`), 숫자 읽기(`numread.js`), 들은 말 → 숫자(`numhear.js`), 조사·자리 이름(`korean.js`), 시드 난수(`rng.js`)
 - `src/ui/`: 화면(`main.js`가 지도·풀기 화면), 실물과 같은 주판(`abacus-view.js`), 선생님(`teacher-view.js`, 꾸미기 포함), 목소리(`speech.js`), 듣기(`listen.js`), 효과음(`sfx.js`), 기록 저장(`storage.js`, localStorage는 여기서만)
 - `src/content/`: 지도(`curriculum.json`), 선생님 모습(`teacher-look.json`)과 목소리(`teacher.json`), 섬마다 대본(`lessons/<섬>.json`, 함께 쓰는 대사는 `lessons/common.json`), 끝 소리(`end-sound.m4a`)
 - `media/`: 대사·숫자 조각 음성, 끝 소리, `manifest.json`. 스크립트가 만든다
