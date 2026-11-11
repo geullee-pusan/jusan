@@ -19,11 +19,11 @@ export function createBoard(root) {
       listItems = new Map();
     },
     /** 문제 하나를 크게 쓴다 */
-    problem(a, b) {
+    problem(a, b, op = '×') {
       this.clear();
       const p = document.createElement('div');
       p.className = 'board-problem';
-      p.textContent = `${fmt(a)} × ${fmt(b)}`;
+      p.textContent = `${fmt(a)} ${op} ${fmt(b)}`;
       body.appendChild(p);
     },
     /**

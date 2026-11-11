@@ -20,6 +20,8 @@ export const SKILLS = [
   { id: 'mul-carry', group: '곱셈', name: '곱을 더할 때 앞자리로 올리기', island: 'mul-1digit' },
   { id: 'mul2-shift', group: '곱셈', name: '두 자리 × 두 자리: 시작 자리 옮기기', island: 'mul-2x2' },
   { id: 'mul2-carry', group: '곱셈', name: '두 자리 × 두 자리: 더할 때 올리기', island: 'mul-2x2' },
+  { id: 'div-rule1', group: '나눗셈', name: '나눌 수 있으면 두 줄 왼쪽에 몫', island: 'div-1' },
+  { id: 'div-rule2', group: '나눗셈', name: '나눌 수 없으면 두 자리 보고 한 줄 왼쪽에 몫', island: 'div-1' },
   { id: 'mind-picture', group: '암산', name: '머릿속 주판', island: 'mental-1' },
   { id: 'mind-listen', group: '암산', name: '듣고 하는 암산', island: 'mental-2' },
   { id: 'mind-flash', group: '암산', name: '번쩍 암산', island: 'mental-3' },
@@ -41,7 +43,9 @@ const TECH_TO_SKILL = {
 const MISS_TO_SKILLS = {
   'no-pad': ['zero-pad'],
   'no-carry': ['mul-carry', 'mul2-carry'],
-  place: ['mul-place', 'mul2-shift'],
+  place: ['mul-place', 'mul2-shift', 'div-rule1', 'div-rule2'],
+  over: ['div-rule1', 'div-rule2'],
+  under: ['div-rule1', 'div-rule2'],
   'no-shift': ['mul2-shift'],
   carry: ['friend-add', 'friend-sub', 'chain'],
   five: ['five-add', 'five-sub', 'both'],
@@ -69,6 +73,9 @@ export function skillsOfResult(lesson, result) {
   } else if (lesson === 'mul-2x2') {
     out.add('mul2-shift');
     if (f.carry) out.add('mul2-carry');
+  } else if (lesson === 'div-1') {
+    if (f.rule1) out.add('div-rule1');
+    if (f.rule2) out.add('div-rule2');
   } else if (lesson === 'dec-1') {
     // 자리 숫자 문제는 features.place가 있다. 읽기 문제는 없다
     if (f.place !== undefined) out.add('dec-place');

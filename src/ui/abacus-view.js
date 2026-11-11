@@ -144,9 +144,9 @@ export function createAbacus(root) {
       labels.style.visibility = on ? 'visible' : 'hidden';
     },
     /** 수 하나를 그대로 놓는다(머릿속 주판의 첫 줄 그림) */
-    setNumber(n) {
+    setNumber(n, at = 0) {
       this.setup();
-      String(n).split('').reverse().forEach((d, place) => this.set(place, Number(d)));
+      String(n).split('').reverse().forEach((d, i) => this.set(at + i, Number(d)));
     },
     /** 자리를 밝게: kind 'now'(지금 움직이는 자리), 'start'(시작 자리) */
     highlight(place, kind = 'now') {

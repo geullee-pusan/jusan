@@ -60,7 +60,7 @@ export function createPlayer(ctx) {
           if (scene.pose !== 'demo') teacher.pose('idle');
           break;
         case 'board-problem':
-          board.problem(scene.a, scene.b);
+          board.problem(scene.a, scene.b, scene.op);
           break;
         case 'board-answer':
           board.answer(scene.value);
@@ -84,7 +84,7 @@ export function createPlayer(ctx) {
           ctx.ui.setAbacusVisible?.(scene.on);
           break;
         case 'abacus-set':
-          abacus.setNumber(scene.value);
+          abacus.setNumber(scene.value, scene.at ?? 0); // at: 수의 일의 자리를 놓을 줄(나눗셈은 자리점 오른쪽)
           break;
         case 'abacus-highlight': // 자리 하나를 밝게(자리점 성에서 일·천·백만의 자리를 짚는다). place: null이면 끈다
           abacus.highlight(scene.place, 'now');
