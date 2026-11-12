@@ -1,0 +1,84 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>주인공 3D 다듬기(개발용)</title>
+<!-- scripts/hero-prep.mjs가 개발 서버(npm run dev)로 이 페이지를 열어 쓴다. 앱에는 들어가지 않는다. -->
+<script type="module">
+import * as THREE from '/node_modules/three/build/three.module.js';
+import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFExporter } from '/node_modules/three/examples/jsm/exporters/GLTFExporter.js';
+import { OBJExporter } from '/node_modules/three/examples/jsm/exporters/OBJExporter.js';
+
+const toB64 = (buf) => {
+  let s = '';
+  const b = new Uint8Array(buf);
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000));
+  return btoa(s);
+};
+
+/** 몸에서 떨어져 떠 있는 작은 조각을 지운다(삼각형이 꼭짓점 위치로 이어진 덩어리 가운데 작은 것) */
+function removeFloaters(geometry, keepRatio) {
+  const pos = geometry.attributes.position;
+  const index = geometry.index ? geometry.index.array : Array.from({ length: pos.count }, (_, i) => i);
+  const key = (i) => `${Math.round(pos.getX(i) * 1e4)},${Math.round(pos.getY(i) * 1e4)},${Math.round(pos.getZ(i) * 1e4)}`;
+  const weld = new Map();
+  const vid = new Int32Array(pos.count);
+  for (let i = 0; i < pos.count; i++) {
+    const k = key(i);
+    if (!weld.has(k)) weld.set(k, weld.size);
+    vid[i] = weld.get(k);
+  }
+  const parent = new Int32Array(weld.size).map((_, i) => i);
+  const find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+  const tris = index.length / 3;
+  for (let t = 0; t < tris; t++) {
+    const a = find(vid[index[t * 3]]), b = find(vid[index[t * 3 + 1]]), c = find(vid[index[t * 3 + 2]]);
+    parent[b] = a;
+    parent[find(c)] = a;
+  }
+  const count = new Map();
+  for (let t = 0; t < tris; t++) {
+    const r = find(vid[index[t * 3]]);
+    count.set(r, (count.get(r) ?? 0) + 1);
+  }
+  const sizes = [...count.values()].sort((x, y) => y - x);
+  const keep = new Set([...count.entries()].filter(([, n]) => n >= sizes[0] * keepRatio).map(([r]) => r));
+  const out = [];
+  for (let t = 0; t < tris; t++) if (keep.has(find(vid[index[t * 3]]))) out.push(index[t * 3], index[t * 3 + 1], index[t * 3 + 2]);
+  geometry.setIndex(out);
+  return { parts: sizes.length, sizes: sizes.slice(0, 8), kept: out.length / 3, removed: tris - out.length / 3 };
+}
+
+window.prep = async (url, keepRatio = 0.05) => {
+  const gltf = await new GLTFLoader().loadAsync(url);
+  const scene = gltf.scene;
+  let report = null;
+  let texture = null;
+  scene.traverse((o) => {
+    if (!o.isMesh) return;
+    report = removeFloaters(o.geometry, keepRatio);
+    o.material.metalness = 0;
+    o.material.roughness = 0.85;
+    texture = o.material.map;
+  });
+  // 바닥에 발을 붙이고(키 높이 그대로) 가운데에 세운다
+  const box = new THREE.Box3().setFromObject(scene);
+  const c = box.getCenter(new THREE.Vector3());
+  scene.position.set(-c.x, -box.min.y, -c.z);
+  scene.updateMatrixWorld(true);
+  const glb = await new GLTFExporter().parseAsync(scene, { binary: true });
+  // Mixamo용: OBJ + MTL + 텍스처 PNG
+  const obj = 'mtllib hero.mtl\n' + new OBJExporter().parse(scene).replace(/^usemtl .*$/m, 'usemtl hero');
+  const mtl = 'newmtl hero\nKd 1 1 1\nmap_Kd hero.png\n';
+  const cv = document.createElement('canvas');
+  cv.width = texture.image.width;
+  cv.height = texture.image.height;
+  const x = cv.getContext('2d');
+  // glTF 텍스처는 위아래가 뒤집혀 있지 않다(flipY=false). OBJ는 보통 뒤집힌 것을 기대한다
+  x.translate(0, cv.height);
+  x.scale(1, -1);
+  x.drawImage(texture.image, 0, 0);
+  const png = cv.toDataURL('image/png').split(',')[1];
+  return { report, glb: toB64(glb), obj, mtl, png, height: box.max.y - box.min.y };
+};
+window.ready = true;
+</script>

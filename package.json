@@ -20,5 +20,8 @@
     "galmuri": "2.40.3",
     "vite": "8.3.0",
     "vite-plugin-singlefile": "2.3.3"
+  },
+  "dependencies": {
+    "three": "0.186.1"
   }
 }

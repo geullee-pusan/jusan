@@ -13,3 +13,7 @@ assets/lesson-notes/
 # 부모가 보낸 아이 영상(참고용). 저장소에 올리지 않는다.
 KakaoTalk_*.mp4
 KakaoTalk_*.jpg
+
+# 3D 주인공 작업 파일(아이 영상에서 뽑은 장면, 3D 원본, Mixamo 파일). 저장소에 올리지 않는다.
+# 앱에 넣는 다듬은 주인공만 src/content/에 둔다.
+assets/hero/
