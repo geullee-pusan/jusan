@@ -638,7 +638,8 @@ export function createDefense(root, io) {
   });
 
   function setPaused(on) {
-    if (!game) return;
+    // 게임 오버 판이 떠 있을 때는 멈추지 않는다(뒤에서 이로가 게임 오버 동작을 계속 되풀이한다)
+    if (!game || game.over) return;
     game.paused = on;
     if (on) hero.stop();
     else hero.start();
