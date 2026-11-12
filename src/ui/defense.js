@@ -114,6 +114,7 @@ export function createDefense(root, io) {
         <div class="def-castle" id="def-castle"><div class="def-flag">🚩</div></div>
         <div class="def-lane" style="--lane:0"></div><div class="def-lane" style="--lane:1"></div><div class="def-lane" style="--lane:2"></div>
         <div class="def-levelup" id="def-levelup" hidden></div>
+        <div class="def-over" id="def-over" hidden></div>
         <div class="def-paused" id="def-paused" hidden>⏸️ 멈췄어요<br><small>다시 하려면 ▶️ 계속</small></div>
       </div>
       <div class="answer panel def-answer">
@@ -242,6 +243,12 @@ export function createDefense(root, io) {
       over: false,
     };
     for (const lane of root.querySelectorAll('.def-lane')) lane.innerHTML = '';
+    // 지난 판의 무너진 성·먼지·게임 오버 판을 치운다
+    field.classList.remove('over');
+    $('#def-castle').classList.remove('collapse', 'hit', 'hurt');
+    for (const el of field.querySelectorAll('.def-dust, .def-rock')) el.remove();
+    $('#def-over').hidden = true;
+    root.querySelector('.def-answer').classList.remove('gone');
     setStage(stageOf(game.level));
     $('#def-levelup').hidden = true;
     $('#def-setup').hidden = true;
@@ -644,7 +651,7 @@ export function createDefense(root, io) {
   function finish(quit = false) {
     if (!game || game.over) return;
     game.over = true;
-    hero.stop();
+    if (quit) hero.stop();
     stopListening();
     musicUpdate();
     clearTimeout(game.levelTimer);
@@ -670,18 +677,66 @@ export function createDefense(root, io) {
       });
     }
     io.save(data);
-    if (!quit) sfx('gameover');
-    if (newBest || newLevel) setTimeout(() => sfx('badge'), quit ? 0 : 750);
+    const summary = `
+      <div class="def-reach">Lv.${settings.startLevel} → <b>Lv.${game.level}</b></div>
+      <p>${climbed > 0 ? `레벨을 ${climbed}번 올렸어요.` : '이번에는 레벨이 그대로예요.'}${newLevel ? ' 🎉 가장 높이 간 레벨이에요!' : ''}</p>
+      <p>점수 <b>${fmt(game.score)}</b>점${newBest ? ' · 🎉 새 최고 점수!' : ` · 최고 ${fmt(Math.max(prevBest, game.score))}점`}</p>
+      <p>무찌른 몬스터 ${game.defeated.length}마리</p>`;
+    const buttons = `<button class="block-btn green big" data-d="again">⚔️ 한 판 더</button><button class="block-btn big" data-d="setup">⚙️ 설정 바꾸기</button><button class="block-btn big" data-d="exit">🗺️ 지도로</button>`;
+    if (!quit) {
+      collapse(summary, buttons, newBest || newLevel);
+      return;
+    }
+    if (newBest || newLevel) sfx('badge');
     $('#def-game').hidden = true;
     const res = $('#def-result');
     res.hidden = false;
     res.innerHTML = `
-      <h2>${quit ? '그만했어요' : '💥 성벽이 무너졌어요'}</h2>
-      <div class="def-reach">Lv.${settings.startLevel} → <b>Lv.${game.level}</b></div>
-      <p>${climbed > 0 ? `레벨을 ${climbed}번 올렸어요.` : '이번에는 레벨이 그대로예요.'}${newLevel ? ' 🎉 가장 높이 간 레벨이에요!' : ''}</p>
-      <p>점수 <b>${fmt(game.score)}</b>점${newBest ? ' · 🎉 새 최고 점수!' : ` · 최고 ${fmt(Math.max(prevBest, game.score))}점`}</p>
-      <p>무찌른 몬스터 ${game.defeated.length}마리</p>
-      <div class="controls"><button class="block-btn green big" data-d="again">⚔️ 한 판 더</button><button class="block-btn big" data-d="setup">⚙️ 시작 레벨 바꾸기</button><button class="block-btn big" data-d="exit">🗺️ 지도로</button></div>`;
+      <h2>그만했어요</h2>
+      ${summary}
+      <div class="controls">${buttons}</div>`;
+  }
+
+  /**
+   * 성벽이 다 깎였을 때: 들판을 그대로 둔 채 성이 흔들리다 땅으로 무너져 내리고(먼지·돌조각·소리),
+   * 남은 몬스터는 흐려진다. 조금 뒤 들판 위에 게임 오버 판(점수 등)과 아래쪽 버튼 세 개를 띄운다.
+   */
+  function collapse(summary, buttons, record) {
+    const my = game;
+    $('#def-levelup').hidden = true;
+    root.querySelector('.def-answer').classList.add('gone');
+    field.classList.add('over');
+    const castle = $('#def-castle');
+    castle.classList.remove('hit');
+    castle.classList.add('collapse');
+    sfx('crumble');
+    // 성 둘레에 먼지 구름과 떨어지는 돌조각
+    const f = field.getBoundingClientRect();
+    const c = castle.getBoundingClientRect();
+    const cx = c.left - f.left;
+    const cw = Math.max(60, c.width);
+    const ch = Math.max(80, c.height);
+    const top = c.top - f.top;
+    for (let i = 0; i < 9; i++) {
+      const d = document.createElement('div');
+      d.className = 'def-dust';
+      d.style.cssText = `left:${cx + (i / 8) * cw - 45}px;bottom:${(i % 3) * 18}px;--d:${0.15 + (i % 4) * 0.22}s`;
+      field.appendChild(d);
+    }
+    for (let i = 0; i < 14; i++) {
+      const r = document.createElement('div');
+      r.className = 'def-rock';
+      r.style.cssText = `left:${cx + (((i * 37) % 100) / 100) * cw}px;top:${top + (((i * 53) % 60) / 100) * ch}px;--d:${0.1 + (i % 5) * 0.18}s;--dx:${((i % 7) - 3) * 14}px;--r:${((i % 5) - 2) * 120}deg`;
+      field.appendChild(r);
+    }
+    setTimeout(() => {
+      if (game !== my) return;
+      sfx('gameover');
+      if (record) setTimeout(() => sfx('badge'), 750);
+      const over = $('#def-over');
+      over.innerHTML = `<h2>💥 게임 오버</h2><p class="def-over-sub">성이 무너졌어요</p>${summary}<div class="def-over-btns">${buttons}</div>`;
+      over.hidden = false;
+    }, 2300);
   }
 
   root.addEventListener('click', (e) => {
@@ -710,6 +765,8 @@ export function createDefense(root, io) {
     }
     if (act === 'quit') finish(true);
     if (act === 'setup') {
+      hero.stop();
+      $('#def-game').hidden = true;
       $('#def-result').hidden = true;
       $('#def-setup').hidden = false;
       renderSetup();

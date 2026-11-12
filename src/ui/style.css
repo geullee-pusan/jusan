@@ -526,3 +526,31 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 /* 3D 주인공(이로): 싸움에서 물러나 성 옆 뒤쪽 언덕에서 구경한다(작게, 위에, 몬스터 뒤에). 가로:세로는 HERO_VIEW.aspect(0.68). 손가락 입력은 받지 않는다 */
 .def-hero { position: absolute; left: 80px; bottom: 23%; width: 104px; height: 153px; z-index: 8; pointer-events: none; }
 .def-field.castle-art .def-hero { left: 136px; }
+
+/* 성벽이 다 깎였을 때: 성이 흔들리다 땅으로 무너져 내린다. 먼지 구름과 돌조각, 남은 몬스터는 흐려진다 */
+.def-castle.collapse { animation: castle-collapse 2.1s ease-in forwards; }
+@keyframes castle-collapse {
+  0% { transform: none; }
+  7% { transform: translateX(-6px) rotate(-1.2deg); }
+  14% { transform: translateX(6px) rotate(1deg); }
+  21% { transform: translateX(-5px) rotate(-.8deg); }
+  28% { transform: translateX(4px) translateY(2%); }
+  100% { transform: translateY(88%) rotate(-7deg); filter: brightness(.5) blur(1px); opacity: .15; }
+}
+.def-field.over .enemy { transition: opacity .9s; opacity: 0; }
+.def-dust { position: absolute; width: 90px; height: 90px; border-radius: 50%; z-index: 12; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle, rgba(175, 165, 150, .9), rgba(175, 165, 150, 0) 70%); animation: def-dust 1.9s ease-out forwards; animation-delay: var(--d, 0s); }
+@keyframes def-dust { 0% { opacity: 0; transform: scale(.3); } 20% { opacity: .95; } 100% { opacity: 0; transform: translateY(-70px) scale(2.3); } }
+.def-rock { position: absolute; width: 10px; height: 8px; background: #5f5a52; border: 1px solid #222; z-index: 13; pointer-events: none; opacity: 0;
+  animation: def-rock 1.2s ease-in forwards; animation-delay: var(--d, 0s); }
+@keyframes def-rock { 0% { opacity: 1; transform: none; } 90% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx, 0px), 300px) rotate(var(--r, 0deg)); } }
+/* 게임 오버 판: 들판 위에 겹치고, 버튼 세 개는 아래쪽에 */
+.def-over { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 16px 92px; text-align: center; color: #fff; background: rgba(10, 10, 20, .62); animation: def-over-in .5s ease-out; }
+.def-over[hidden] { display: none; }
+.def-over h2 { margin: 0 0 4px; font-size: 2.4em; color: #ffcf5a; text-shadow: 3px 3px 0 #000; }
+.def-over .def-over-sub { margin: 0 0 8px; font-size: 1.1em; }
+.def-over p { margin: 4px 0; text-shadow: 1px 1px 0 #000; }
+.def-over-btns { position: absolute; left: 0; right: 0; bottom: 16px; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; padding: 0 12px; }
+@keyframes def-over-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+.def-answer.gone { visibility: hidden; }

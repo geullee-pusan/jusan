@@ -1,7 +1,7 @@
 // 짧은 효과음(직접 만든 소리, 파일 없음). 특정 게임의 효과음을 따라 하지 않는다.
 //  tap: 버튼 "톡", correct: 맞았을 때 "띵동", badge: 배지 받을 때 짧은 가락, bead: 알 "딱"
 //  성 지키기(2026-11-10): appear(몬스터 나타남), defeat(무찌름), nope(그 답의 몬스터 없음), wall(성벽 깎임),
-//    levelup(레벨 업), gameover(끝), 그리고 몬스터 고유 동작 소리(boing, flap, puff, skitter, groan, rattle,
+//    levelup(레벨 업), gameover(끝), crumble(성이 무너짐), 그리고 몬스터 고유 동작 소리(boing, flap, puff, skitter, groan, rattle,
 //    wail, stomp, clank, roar, erupt, summon, cackle)
 let ac = null;
 let muted = false;
@@ -112,6 +112,14 @@ const SOUNDS = {
     [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.1, 0.18, { gain: 0.1 }));
     tone(1319, 0.42, 0.45, { type: 'triangle', gain: 0.12, vibrato: 12 });
     tone(1047, 0.42, 0.45, { type: 'triangle', gain: 0.08 });
+  },
+  crumble: () => {
+    // 길게 우르르 + 무너지며 쿵쿵
+    noise(0, 1.8, { type: 'lowpass', from: 700, to: 70, gain: 0.22 });
+    [0, 0.3, 0.6, 0.95, 1.3].forEach((t, i) => {
+      tone(72 - i * 6, t, 0.32, { type: 'sine', gain: 0.24, to: 38 });
+      noise(t, 0.2, { type: 'bandpass', from: 450, gain: 0.1 });
+    });
   },
   gameover: () => [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.16, 0.28, { type: 'triangle', gain: 0.1 })),
 
