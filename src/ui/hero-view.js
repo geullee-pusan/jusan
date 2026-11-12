@@ -4,12 +4,14 @@
 import * as THREE from 'three';
 import data from '../content/hero/hero.json';
 import textureUrl from '../content/hero/hero.webp';
-import { buildHero } from './hero-model.js';
+import { buildHero, HERO_VIEW, heroCamera } from './hero-model.js';
 
-const DANCES = ['dance1', 'dance2', 'dance3', 'dance4', 'dance5'];
+/** 캔버스 밖으로 몸이 나가 잘리는 동작은 쓰지 않는다(scripts/hero-pack이 재어 data.fits에 적는다) */
+const fits = (name) => data.fits?.[name] !== false && data.clips.some((c) => c.name === name);
+const DANCES = ['dance1', 'dance2', 'dance3', 'dance4', 'dance5'].filter(fits);
 const FADE = 0.25;
 /** 성벽이 깎일 때 번갈아 하는 동작 */
-const HURTS = ['defeated', 'hurt2', 'hurt3'];
+const HURTS = ['defeated', 'hurt2', 'hurt3'].filter(fits);
 /** 이만큼(초) 아무 일 없이 서 있으면 하품한다 */
 const YAWN_AFTER = 15;
 
@@ -36,9 +38,7 @@ export function createHeroView(host) {
   const sun = new THREE.DirectionalLight(0xffffff, 1.5);
   sun.position.set(2, 3, 2);
   scene.add(sun);
-  const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 20);
-  camera.position.set(0, 0.62, 3.4);
-  camera.lookAt(0, 0.55, 0);
+  const camera = heroCamera();
 
   let mixer = null;
   let clips = null;
@@ -50,7 +50,7 @@ export function createHeroView(host) {
   const image = new Image();
   image.onload = () => {
     const hero = buildHero(data, image);
-    hero.root.rotation.y = 0.75; // 몬스터가 오는 오른쪽을 비스듬히 본다
+    hero.root.rotation.y = HERO_VIEW.turn; // 몬스터가 오는 오른쪽을 비스듬히 본다
     scene.add(hero.root);
     clips = hero.clips;
     mixer = new THREE.AnimationMixer(hero.root);
@@ -102,7 +102,8 @@ export function createHeroView(host) {
     mixer?.update(dt);
     if (currentName === 'idle') {
       idleFor += dt;
-      if (idleFor > YAWN_AFTER) play('yawn');
+      if (idleFor > YAWN_AFTER && fits('yawn')) play('yawn');
+      else if (idleFor > YAWN_AFTER) idleFor = 0;
     }
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
@@ -122,11 +123,11 @@ export function createHeroView(host) {
     },
     /** 성벽이 깎였을 때: 하던 동작을 멈추고 고개를 떨구거나, 움찔하거나, 아파한다(돌아가며) */
     hurt() {
-      play(HURTS[hurtNo++ % HURTS.length]);
+      if (HURTS.length) play(HURTS[hurtNo++ % HURTS.length]);
     },
     /** 몬스터를 무찔렀을 때: 춤 하나(차례대로 돌아가며). 고개를 떨구거나 춤추는 중이면 그대로 둔다 */
     cheer() {
-      if (currentName !== 'idle' && currentName !== 'yawn') return;
+      if ((currentName !== 'idle' && currentName !== 'yawn') || !DANCES.length) return;
       play(DANCES[dance++ % DANCES.length]);
     },
     /** 새 판: 숨쉬기로 */

@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { buildHero } from '/src/ui/hero-model.js';
+import { buildHero, HERO_VIEW, heroCamera } from '/src/ui/hero-model.js';
 
 const toB64 = (typed) => {
   const b = new Uint8Array(typed.buffer, typed.byteOffset, typed.byteLength);
@@ -136,6 +136,45 @@ window.pack = async ({ base, baseClip, extras, textureFile }) => {
     clips,
   };
 
+  // 동작마다 게임과 같은 카메라로 0.05초마다 몸의 꼭짓점을 화면에 비춰 보고, 캔버스 밖으로 나가면 쓰지 않는다
+  const fitInfo = {};
+  data.fits = {};
+  {
+    const hero = buildHero(data, null);
+    hero.root.rotation.y = HERO_VIEW.turn;
+    let sm = null;
+    hero.root.traverse((o) => { if (o.isSkinnedMesh) sm = o; });
+    const cam = heroCamera();
+    cam.updateMatrixWorld(true);
+    const v = new THREE.Vector3();
+    const n = sm.geometry.attributes.position.count;
+    for (const c of data.clips) {
+      const mixer = new THREE.AnimationMixer(hero.root);
+      const action = mixer.clipAction(hero.clips[c.name]);
+      action.play();
+      let minX = 1, maxX = -1, minY = 1, maxY = -1;
+      for (let t = 0; t <= c.duration; t += 0.05) {
+        mixer.setTime(t);
+        hero.root.updateMatrixWorld(true);
+        for (let i = 0; i < n; i += 3) {
+          sm.getVertexPosition(i, v);
+          sm.localToWorld(v);
+          v.project(cam);
+          minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x);
+          minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y);
+        }
+      }
+      action.stop();
+      mixer.uncacheRoot(hero.root);
+      const ok = minX >= -0.99 && maxX <= 0.99 && minY >= -0.99 && maxY <= 0.99;
+      data.fits[c.name] = ok;
+      fitInfo[c.name] = [minX, maxX, minY, maxY].map((x) => +x.toFixed(2)).concat(ok ? 'OK' : '잘림');
+    }
+  }
+
+  // 잘리는 동작은 앱에 넣지 않는다(서 있기는 늘 남긴다)
+  data.clips = data.clips.filter((c) => data.fits[c.name] || c.name === 'idle');
+
   // 확인용 그림: 다시 조립해서 동작마다 몇 장면을 그린다
   const image = texture ? await new Promise((ok) => { const im = new Image(); im.onload = () => ok(im); im.src = texture; }) : null;
   const shots = [];
@@ -161,7 +200,7 @@ window.pack = async ({ base, baseClip, extras, textureFile }) => {
       shots.push({ clip: c.name, f, url: r.domElement.toDataURL('image/jpeg', 0.8) });
     }
   }
-  return { json: JSON.stringify(data), texture, shots, report: { bones: bones.length, verts: a.position.count, tris: (geo.index ? geo.index.count : a.position.count) / 3, clips: data.clips.map((c) => [c.name, +c.duration.toFixed(2), c.tracks.length]), texture: img ? [img.width, img.height] : null, height: size.y } };
+  return { json: JSON.stringify(data), texture, shots, report: { fit: fitInfo, bones: bones.length, verts: a.position.count, tris: (geo.index ? geo.index.count : a.position.count) / 3, clips: data.clips.map((c) => [c.name, +c.duration.toFixed(2), c.tracks.length]), texture: img ? [img.width, img.height] : null, height: size.y } };
 };
 window.ready = true;
 </script>

@@ -11,6 +11,20 @@ function decode(b64, Type) {
   return new Type(bytes.buffer);
 }
 
+/**
+ * 성 지키기에서 주인공을 보는 카메라와 캔버스 비율(hero-view.js와 scripts/hero-pack.html이 함께 쓴다).
+ * 캔버스(CSS .def-hero)의 가로:세로도 aspect와 같게 둔다.
+ */
+export const HERO_VIEW = { fov: 28, eye: [0, 0.62, 3.4], target: [0, 0.55, 0], turn: 0.75, aspect: 0.68 };
+
+/** HERO_VIEW로 카메라를 만든다 */
+export function heroCamera(aspect = HERO_VIEW.aspect) {
+  const camera = new THREE.PerspectiveCamera(HERO_VIEW.fov, aspect, 0.1, 20);
+  camera.position.fromArray(HERO_VIEW.eye);
+  camera.lookAt(new THREE.Vector3().fromArray(HERO_VIEW.target));
+  return camera;
+}
+
 const TYPES = { f32: Float32Array, u16: Uint16Array, u32: Uint32Array, i16: Int16Array };
 const arr = (a) => decode(a.data, TYPES[a.type]);
 /** 동작 값: 16비트 정수로 담은 회전은 -1~1로 되돌린다 */
