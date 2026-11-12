@@ -8,6 +8,8 @@ import { buildHero } from './hero-model.js';
 
 const DANCES = ['dance1', 'dance2', 'dance3', 'dance4', 'dance5'];
 const FADE = 0.25;
+/** 성벽이 깎일 때 번갈아 하는 동작 */
+const HURTS = ['defeated', 'hurt2'];
 /** 이만큼(초) 아무 일 없이 서 있으면 하품한다 */
 const YAWN_AFTER = 15;
 
@@ -43,6 +45,7 @@ export function createHeroView(host) {
   let current = null;
   let currentName = '';
   let dance = 0;
+  let hurtNo = 0;
   let idleFor = 0; // 서 있기만 한 시간(초)
   const image = new Image();
   image.onload = () => {
@@ -64,7 +67,7 @@ export function createHeroView(host) {
     action.reset();
     action.enabled = true;
     action.setEffectiveWeight(1);
-    action.timeScale = name === 'defeated' ? 1.4 : 1;
+    action.timeScale = HURTS.includes(name) ? 1.4 : 1;
     if (name === 'idle') {
       action.setLoop(THREE.LoopRepeat, Infinity);
     } else {
@@ -117,9 +120,9 @@ export function createHeroView(host) {
     stop() {
       running = false;
     },
-    /** 성벽이 깎였을 때: 하던 동작을 멈추고 고개를 떨군다 */
+    /** 성벽이 깎였을 때: 하던 동작을 멈추고 고개를 떨구거나 얼굴을 닦는다(번갈아) */
     hurt() {
-      play('defeated');
+      play(HURTS[hurtNo++ % HURTS.length]);
     },
     /** 몬스터를 무찔렀을 때: 춤 하나(차례대로 돌아가며). 고개를 떨구거나 춤추는 중이면 그대로 둔다 */
     cheer() {
