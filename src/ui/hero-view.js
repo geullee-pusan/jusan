@@ -9,7 +9,7 @@ import { buildHero } from './hero-model.js';
 const DANCES = ['dance1', 'dance2', 'dance3', 'dance4', 'dance5'];
 const FADE = 0.25;
 /** 성벽이 깎일 때 번갈아 하는 동작 */
-const HURTS = ['defeated', 'hurt2'];
+const HURTS = ['defeated', 'hurt2', 'hurt3'];
 /** 이만큼(초) 아무 일 없이 서 있으면 하품한다 */
 const YAWN_AFTER = 15;
 
@@ -120,7 +120,7 @@ export function createHeroView(host) {
     stop() {
       running = false;
     },
-    /** 성벽이 깎였을 때: 하던 동작을 멈추고 고개를 떨구거나 얼굴을 닦는다(번갈아) */
+    /** 성벽이 깎였을 때: 하던 동작을 멈추고 고개를 떨구거나, 움찔하거나, 아파한다(돌아가며) */
     hurt() {
       play(HURTS[hurtNo++ % HURTS.length]);
     },

@@ -59,7 +59,7 @@
    - 서 있기: idle.fbx
    - 춤: dance-*.fbx
    - 하품: yawn.fbx
-   - 성벽이 깎일 때 또 하나: hurt-spat.fbx
+   - 성벽이 깎일 때 또 하나: hurt-spat.fbx, hurt-injured.fbx
 6. **묶기:** `node scripts/hero-pack.mjs` → `src/content/hero/hero.json`(뼈대·메시·동작, 1초 20장면, 회전은 16비트)과 `hero.webp`(텍스처).
    - 앱은 모델 로더 없이 `src/ui/hero-model.js`로 조립한다. GLTFLoader 같은 로더 안의 네트워크 코드가 배포물에 들어가지 않게 하려는 것이다.
    - three.js 셰이더 주석의 논문 주소는 빌드 때 지운다(`vite.config.js`).
@@ -67,5 +67,5 @@
 **성 지키기에서(src/ui/hero-view.js):** 주인공은 성 옆 조금 높은 땅에서 싸움을 구경한다.
 - 평소에는 서 있다. 15초 동안 아무 일이 없으면 하품한다.
 - 몬스터를 무찌르면 춤 다섯 가지 중 하나를 차례대로 춘다. 이미 춤추는 중이면 하던 춤을 그대로 이어 간다.
-- 성벽이 깎이면 고개를 떨구거나(defeated) 얼굴에 뭔가 맞은 듯 움찔한다(hurt2, Mixamo "Spat In Face"). 둘이 번갈아 나온다.
+- 성벽이 깎이면 고개를 떨구거나(defeated) 얼굴에 뭔가 맞은 듯 움찔하거나(hurt2, "Spat In Face") 아파한다(hurt3, "Injured Hurting Idle"). 셋이 돌아가며 나온다.
 - WebGL이 안 되는 기기에서는 주인공 없이 게임만 한다.
