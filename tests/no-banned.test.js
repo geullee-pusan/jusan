@@ -20,7 +20,9 @@ function walk(dir) {
   return out;
 }
 
-const files = [...walk(resolve(ROOT, 'src')), resolve(ROOT, 'index.html')];
+// 3D 주인공 데이터(src/content/hero/hero.json)는 숫자를 base64 글자로 담은 것이라 우연히 낱말과 겹칠 수 있다. 코드가 아니므로 뺀다
+const DATA = new Set([resolve(ROOT, 'src/content/hero/hero.json')]);
+const files = [...walk(resolve(ROOT, 'src')).filter((p) => !DATA.has(p)), resolve(ROOT, 'index.html')];
 const sources = files.map((path) => ({ path: path.replace(ROOT + '\\', '').replace(ROOT + '/', ''), text: readFileSync(path, 'utf8') }));
 
 /** 뜻이 다른데 글자만 같은 곳은 검사에서 뺀다. */

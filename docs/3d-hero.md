@@ -43,3 +43,28 @@
   - 틀려도 실망하는 동작은 하지 않는다.
 - **꾸미기:** 배지로 연 모자, 선글라스 같은 것을 주인공에게도 입힐 수 있게 한다(나중).
 - **블록 세상과 어울리게:** 땅에 블록 그림자를 깔고, 조명은 무대와 같은 하늘색 빛으로 맞춘다.
+
+## 5. 실제로 만든 방법 (2026-11-12)
+
+무료 도구만 썼다(Hugging Face TRELLIS + Mixamo). 부모 허락으로 아이를 닮은 모델이 git과 배포물에 들어간다(`src/content/hero/`). 원본 영상·장면·FBX는 `assets/hero/`(git 제외)에 둔다.
+
+1. **찍기:** 팔을 옆으로 45도 넘게 벌린 A자 자세로 서서 한 바퀴 돈다(겨드랑이 아래로 배경이 보이게). 팔이 몸에 붙은 영상으로 만들면 팔을 들 때 겨드랑이가 찢어진다(첫 영상에서 겪음).
+2. **장면 고르기:** `node scripts/hero-frames.mjs <영상> sheet:0.5` 로 0.5초마다 보고, `node scripts/hero-frames.mjs <영상> 6.3!,3.8!,9.3!` 처럼 그 시각 그대로 뽑는다.
+   - 손끝이 화면 안에 다 들어온 장면만 쓴다. 정면, 뒤, 비스듬한 뒤 세 장이면 된다.
+   - 아이 옆에 붙은 물건(가방, 옷걸이)은 바닥·벽 색으로 덮는다. TRELLIS 배경 지우기가 함께 남기기 때문이다.
+3. **3D:** TRELLIS(Multiple Images)에 올려 GLB를 받는다. 무료 사용량은 로그인해야 넉넉하다.
+4. **다듬기:** GLB를 `assets/hero/hero-raw.glb`에 두고 `node scripts/hero-prep.mjs`를 돌린다. 떠 있는 조각을 지우고, Mixamo에 올릴 `assets/hero/mixamo/hero.zip`을 만든다.
+5. **뼈대·동작:** Mixamo에 hero.zip을 올리고 표시(턱·손목·팔꿈치·무릎·사타구니)를 놓는다. 동작을 FBX로 받아 `assets/hero/anim/`에 둔다.
+   - 쓰러지기: defeated.fbx
+   - 서 있기: idle.fbx
+   - 춤: dance-*.fbx
+   - 하품: yawn.fbx
+6. **묶기:** `node scripts/hero-pack.mjs` → `src/content/hero/hero.json`(뼈대·메시·동작, 1초 20장면, 회전은 16비트)과 `hero.webp`(텍스처).
+   - 앱은 모델 로더 없이 `src/ui/hero-model.js`로 조립한다. GLTFLoader 같은 로더 안의 네트워크 코드가 배포물에 들어가지 않게 하려는 것이다.
+   - three.js 셰이더 주석의 논문 주소는 빌드 때 지운다(`vite.config.js`).
+
+**성 지키기에서(src/ui/hero-view.js):** 주인공은 성 옆 조금 높은 땅에서 싸움을 구경한다.
+- 평소에는 서 있다. 15초 동안 아무 일이 없으면 하품한다.
+- 몬스터를 무찌르면 춤 다섯 가지 중 하나를 차례대로 춘다. 이미 춤추는 중이면 하던 춤을 그대로 이어 간다.
+- 성벽이 깎이면 고개를 떨군다(defeated).
+- WebGL이 안 되는 기기에서는 주인공 없이 게임만 한다.

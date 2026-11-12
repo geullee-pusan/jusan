@@ -522,3 +522,7 @@ button[aria-pressed='true'] { filter: brightness(.85); }
 .story-layer.full-art { background-size: contain; background-position: center 12%; background-color: transparent; }
 .story-stage.blurfill::before { content: ''; position: absolute; inset: -30px; background: var(--fill) center / cover no-repeat; filter: blur(16px) brightness(.75); }
 .yesno-hint { align-self: center; font-size: .85em; color: var(--ink); background: rgba(255, 255, 255, .9); border: 2px solid #222; border-radius: 4px; padding: 2px 8px; }
+
+/* 3D 주인공(이로): 싸움에서 조금 떨어져 성 옆 언덕에서 구경한다(조금 작게, 조금 위에, 몬스터 뒤에). 손가락 입력은 받지 않는다 */
+.def-hero { position: absolute; left: 96px; bottom: 17%; width: 120px; height: 176px; z-index: 8; pointer-events: none; }
+.def-field.castle-art .def-hero { left: 158px; }

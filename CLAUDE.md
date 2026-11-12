@@ -84,7 +84,7 @@
 - `src/ui/`: 화면(`main.js`가 지도·풀기 화면), 실물과 같은 주판(`abacus-view.js`), 선생님(`teacher-view.js`, 꾸미기 포함), 목소리(`speech.js`), 듣기(`listen.js`), 효과음(`sfx.js`), 기록 저장(`storage.js`, localStorage는 여기서만)
 - `src/content/`: 지도(`curriculum.json`), 선생님 모습(`teacher-look.json`)과 목소리(`teacher.json`), 섬마다 대본(`lessons/<섬>.json`, 함께 쓰는 대사는 `lessons/common.json`), 끝 소리(`end-sound.m4a`)
 - `media/`: 대사·숫자 조각 음성, 끝 소리, `manifest.json`. 스크립트가 만든다
-- `assets/`: 원본 사진(아이 사진 `son-photo.jpg`, 선생님 후보 사진). 아이 사진은 git과 배포물에 넣지 않는다
+- `assets/`: 원본 사진(아이 사진 `son-photo.jpg`, 선생님 후보 사진). 아이 사진은 git과 배포물에 넣지 않는다. 3D 주인공 원본(영상 장면, FBX)은 `assets/hero/`(git 제외)에 두고, 묶은 모델(`src/content/hero/`, 아이를 닮은 3D)만 부모 허락으로 앱에 넣는다(`docs/3d-hero.md`)
 - `scripts/`: 아이콘, 음성 제작 스크립트
 - `public/`: 그대로 복사되는 파일. 홈 화면 설치에 쓰는 manifest, 서비스 워커, 아이콘, 성 지키기 배경음악(`public/music/bgm-N.mp3`). 음악은 커서 앱 파일 안에 넣지 않고 서비스 워커가 깔 때 한 번 받아 둔다(같은 곳의 파일).
 - `tests/`: 테스트

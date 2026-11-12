@@ -10,6 +10,7 @@ import { pickSpokenNumber } from '../core/numhear.js';
 import { replayable, sceneOnLevelUp, sceneOnStart } from '../core/story.js';
 import story from '../content/story.json';
 import { createStoryView } from './story-view.js';
+import { createHeroView } from './hero-view.js';
 import { listenStream, listenSupported, stopListening } from './listen.js';
 import { audioContext, isSfxMuted, sfx } from './sfx.js';
 
@@ -211,6 +212,8 @@ export function createDefense(root, io) {
   window.addEventListener('resize', () => {
     if (!root.hidden && field.offsetParent) placeCovers();
   });
+  // 3D 주인공: 성 앞에 서서 성벽이 깎이면 고개를 떨구고, 몬스터를 무찌르면 춤춘다
+  const hero = createHeroView(field);
 
   function problemHTML(p) {
     if (p.kind === 'mul' || p.kind === 'mul2' || p.kind === 'tt') return `<div class="q-mul">${fmt(p.a)} × ${fmt(p.b)}</div>`;
@@ -249,6 +252,8 @@ export function createDefense(root, io) {
     root.querySelector('[data-d=pause]').textContent = '⏸️ 멈춤';
     renderHud();
     buildKeys();
+    hero.idle();
+    hero.start();
     requestAnimationFrame(frame);
     listenLoop();
     renderMusicButton();
@@ -333,6 +338,7 @@ export function createDefense(root, io) {
       setTimeout(() => el.remove(), 450);
     }
     sfx('defeat');
+    hero.cheer();
     $('#def-heard').textContent = `${fmt(value)}! ${ENEMIES[hit.type].name} 무찌름`;
     const level = levelAfter(settings.startLevel, game.defeated.length);
     if (level > game.level) levelUp(level);
@@ -354,6 +360,7 @@ export function createDefense(root, io) {
       if (game !== my || my.over) return;
       my.walls = Math.max(0, my.walls - 1);
       sfx('wall');
+      hero.hurt();
       field.classList.remove('quake');
       void field.offsetWidth;
       field.classList.add('quake');
@@ -626,6 +633,8 @@ export function createDefense(root, io) {
   function setPaused(on) {
     if (!game) return;
     game.paused = on;
+    if (on) hero.stop();
+    else hero.start();
     $('#def-paused').hidden = !on;
     root.querySelector('[data-d=pause]').textContent = on ? '▶️ 계속' : '⏸️ 멈춤';
     if (on) stopListening();
@@ -635,6 +644,7 @@ export function createDefense(root, io) {
   function finish(quit = false) {
     if (!game || game.over) return;
     game.over = true;
+    hero.stop();
     stopListening();
     musicUpdate();
     clearTimeout(game.levelTimer);
@@ -705,6 +715,7 @@ export function createDefense(root, io) {
       renderSetup();
     }
     if (act === 'exit') {
+      hero.stop();
       if (game && !game.over) finish(true);
       stopListening();
       bgm.pause();

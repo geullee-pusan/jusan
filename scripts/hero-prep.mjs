@@ -1,5 +1,6 @@
 // 3D 주인공 다듬기(docs/3d-hero.md): 사진 → 3D 서비스(TRELLIS)에서 받은 GLB를 앱과 Mixamo에 맞게 고친다.
-//   npm run dev 를 켠 채로: node scripts/hero-prep.mjs [원본 GLB=assets/hero/hero-raw.glb]
+//   node scripts/hero-prep.mjs [원본 GLB=assets/hero/hero-raw.glb]
+//   (이 폴더에서 Vite 서버를 잠깐 띄워 scripts/hero-prep.html을 연다. 다른 개발 서버와 상관없다)
 //   - 몸에서 떨어져 떠 있는 작은 조각을 지운다
 //   - 발을 바닥(0)에, 몸을 가운데에 맞춘다
 //   - assets/hero/hero-clean.glb(다듬은 것)와 assets/hero/mixamo/hero.zip(OBJ+MTL+PNG, Mixamo 올리기용)을 만든다
@@ -9,10 +10,13 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createServer } from 'vite';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const src = process.argv[2] ?? 'assets/hero/hero-raw.glb';
-const DEV = 'http://localhost:5174';
+const vite = await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
+await vite.listen();
+const DEV = `http://127.0.0.1:${vite.httpServer.address().port}`;
 const browserPath = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', 'C:/Program Files/Microsoft/Edge/Application/msedge.exe'].find((p) => existsSync(p));
 if (!browserPath) throw new Error('Chrome이나 Edge를 찾지 못했어요.');
 const dir = join(tmpdir(), `jusan-heroprep-${process.pid}`);
@@ -28,7 +32,7 @@ for (let i = 0; i < 50 && !target; i++) {
     // 아직 뜨는 중
   }
 }
-if (!target) throw new Error('브라우저에 연결하지 못했어요. npm run dev가 켜져 있나요?');
+if (!target) throw new Error('브라우저에 연결하지 못했어요.');
 const ws = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((ok) => ws.addEventListener('open', ok));
 let id = 0;
@@ -54,6 +58,7 @@ ws.close();
 chrome.kill();
 await sleep(300);
 rmSync(dir, { recursive: true, force: true });
+await vite.close();
 
 console.log(`조각 ${r.report.parts}개(삼각형 수 큰 순: ${r.report.sizes.join(', ')}) → 남긴 삼각형 ${r.report.kept}, 지운 삼각형 ${r.report.removed}. 키 ${r.height.toFixed(2)}`);
 writeFileSync(resolve(ROOT, 'assets/hero/hero-clean.glb'), Buffer.from(r.glb, 'base64'));
