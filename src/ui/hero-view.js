@@ -1,5 +1,5 @@
 // 성 지키기의 3D 주인공(이로). 아이를 찍은 영상으로 만든 모델이다(docs/3d-hero.md, 부모 허락).
-// 성 앞에 서 있다가(오래 기다리면 하품), 성벽이 깎이면 고개를 떨구는 동작(defeated)을, 몬스터를 무찌르면 춤 하나를 춘다.
+// 성 앞에 서 있다가(오래 기다리면 하품), 게임 오버면 풀이 죽어 서 있고, 성벽이 깎이면 고개를 떨구는 동작(defeated)을, 몬스터를 무찌르면 춤 하나를 춘다.
 // 그리기만 하고 게임 규칙에는 끼어들지 않는다.
 import * as THREE from 'three';
 import data from '../content/hero/hero.json';
@@ -17,7 +17,7 @@ const YAWN_AFTER = 15;
 
 /**
  * @param {HTMLElement} host 캔버스를 넣을 곳
- * @returns {{start: () => void, stop: () => void, hurt: () => void, cheer: () => void, idle: () => void}}
+ * @returns {{start: () => void, stop: () => void, hurt: () => void, cheer: () => void, idle: () => void, gameOver: () => void}}
  */
 export function createHeroView(host) {
   const canvas = document.createElement('canvas');
@@ -29,7 +29,7 @@ export function createHeroView(host) {
   } catch {
     // WebGL을 못 쓰는 기기: 주인공 없이 게임만 한다
     canvas.remove();
-    return { start() {}, stop() {}, hurt() {}, cheer() {}, idle() {} };
+    return { start() {}, stop() {}, hurt() {}, cheer() {}, idle() {}, gameOver() {} };
   }
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
@@ -68,7 +68,7 @@ export function createHeroView(host) {
     action.enabled = true;
     action.setEffectiveWeight(1);
     action.timeScale = HURTS.includes(name) ? 1.4 : 1;
-    if (name === 'idle') {
+    if (name === 'idle' || name === 'gameover') {
       action.setLoop(THREE.LoopRepeat, Infinity);
     } else {
       action.setLoop(THREE.LoopOnce, 1);
@@ -130,7 +130,11 @@ export function createHeroView(host) {
       if ((currentName !== 'idle' && currentName !== 'yawn') || !DANCES.length) return;
       play(DANCES[dance++ % DANCES.length]);
     },
-    /** 새 판: 숨쉬기로 */
+    /** 게임 오버(성이 무너짐): 풀이 죽은 채 서 있는 동작을 다음 판까지 되풀이한다 */
+    gameOver() {
+      if (fits('gameover')) play('gameover');
+    },
+    /** 새 판: 서 있기로 */
     idle() {
       play('idle');
     },

@@ -710,6 +710,7 @@ export function createDefense(root, io) {
     castle.classList.remove('hit');
     castle.classList.add('collapse');
     sfx('crumble');
+    hero.gameOver();
     // 성 둘레에 먼지 구름과 떨어지는 돌조각
     const f = field.getBoundingClientRect();
     const c = castle.getBoundingClientRect();

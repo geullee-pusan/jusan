@@ -60,6 +60,7 @@
    - 춤: dance-*.fbx
    - 하품: yawn.fbx
    - 성벽이 깎일 때 또 하나: hurt-spat.fbx, hurt-injured.fbx
+   - 게임 오버: gameover.fbx
 6. **묶기:** `node scripts/hero-pack.mjs` → `src/content/hero/hero.json`(뼈대·메시·동작, 1초 20장면, 회전은 16비트)과 `hero.webp`(텍스처).
    - 앱은 모델 로더 없이 `src/ui/hero-model.js`로 조립한다. GLTFLoader 같은 로더 안의 네트워크 코드가 배포물에 들어가지 않게 하려는 것이다.
    - three.js 셰이더 주석의 논문 주소는 빌드 때 지운다(`vite.config.js`).
@@ -68,4 +69,5 @@
 - 평소에는 서 있다. 15초 동안 아무 일이 없으면 하품한다.
 - 몬스터를 무찌르면 춤 하나를 차례대로 춘다. 게임과 같은 카메라로 재어 몸이 캔버스 밖으로 나가 잘리는 동작은 넣지 않는다(hero-pack이 재서 뺀다. 2026-11-12에는 Hip Hop Dancing (1)이 빠졌다. 춤은 Hip Hop Dancing, Silly Dancing 두 개, Hip Hop Dancing (2), Chicken Dance, Hip Hop Dancing (3) 여섯 가지). 이미 춤추는 중이면 하던 춤을 그대로 이어 간다.
 - 성벽이 깎이면 고개를 떨구거나(defeated) 얼굴에 뭔가 맞은 듯 움찔하거나(hurt2, "Spat In Face") 아파한다(hurt3, "Injured Hurting Idle"). 셋이 돌아가며 나온다.
+- 게임 오버(성이 무너짐)면 풀이 죽은 채 서 있는 동작(gameover, "Defeat Idle")을 다음 판까지 되풀이한다.
 - WebGL이 안 되는 기기에서는 주인공 없이 게임만 한다.

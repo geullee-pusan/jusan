@@ -1,6 +1,6 @@
 // 3D 주인공 묶기(docs/3d-hero.md): Mixamo에서 받은 FBX(뼈대·텍스처·동작)를 앱이 쓰는 모양으로 바꾼다.
 //   node scripts/hero-pack.mjs
-//   - 넣는 것: assets/hero/anim/defeated.fbx(모델+쓰러지기), idle.fbx(서 있기), dance-hiphop.fbx, dance-silly.fbx, dance-hiphop2.fbx, dance-hiphop3.fbx, dance-silly2.fbx, dance-chicken.fbx, dance-hiphop4.fbx, yawn.fbx(오래 기다릴 때), hurt-spat.fbx·hurt-injured.fbx(성벽이 깎일 때)
+//   - 넣는 것: assets/hero/anim/defeated.fbx(모델+쓰러지기), idle.fbx(서 있기), dance-hiphop.fbx, dance-silly.fbx, dance-hiphop2.fbx, dance-hiphop3.fbx, dance-silly2.fbx, dance-chicken.fbx, dance-hiphop4.fbx, yawn.fbx(오래 기다릴 때), hurt-spat.fbx·hurt-injured.fbx(성벽이 깎일 때), gameover.fbx(게임 오버)
 //   - 만드는 것: src/content/hero/hero.json(뼈대·메시·동작), src/content/hero/hero.webp(텍스처),
 //     assets/hero/pack-shots.jpg(확인용 그림)
 // 앱은 모델 로더 없이 src/ui/hero-model.js로 조립한다(로더 안의 네트워크 코드를 배포물에 넣지 않으려고).
@@ -31,6 +31,7 @@ const job = {
     ['yawn', `${ANIM}/yawn.fbx`, true],
     ['hurt2', `${ANIM}/hurt-spat.fbx`, true],
     ['hurt3', `${ANIM}/hurt-injured.fbx`, true],
+    ['gameover', `${ANIM}/gameover.fbx`, true],
   ],
 };
 const vite = await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
