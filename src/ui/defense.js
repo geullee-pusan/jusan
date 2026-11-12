@@ -4,7 +4,8 @@
 //  - 블록 몬스터가 오른쪽에서 성으로 다가온다. 머리 위의 문제를 풀어 답을 말하거나 숫자판으로 넣으면 무찌른다.
 //  - 마이크는 게임 내내 듣는다. 숫자가 들리면 바로 제출한다.
 //  - 성에 닿으면 성벽이 한 칸 깎인다. 세 칸이 다 깎이면 끝. 언제든 멈추거나 그만할 수 있다.
-import { ENEMIES, levelAfter, levelInfo, makeEnemy, matchAnswer, PER_LEVEL, positionAt, reached, scoreFor, spawnGap, stageOf, STAGES, START_LEVELS, typesAt, WALLS } from '../core/defense.js';
+import { BANDS, ENEMIES, levelAfter, makeEnemy, matchAnswer, PACES, PER_LEVEL, positionAt, problemMix, reached, scoreFor, spawnGap, stageOf, STAGES, START_LEVELS, TOPICS, travelFor, typesAt, WALLS } from '../core/defense.js';
+import curriculum from '../content/curriculum.json';
 import { pickSpokenNumber } from '../core/numhear.js';
 import { replayable, sceneOnLevelUp, sceneOnStart } from '../core/story.js';
 import story from '../content/story.json';
@@ -89,6 +90,8 @@ export function createDefense(root, io) {
     <section class="panel def-setup" id="def-setup">
       <p>몬스터가 성으로 다가와요. 머리 위 문제를 풀어 답을 말하면 무찔러요.</p>
       <p>몬스터를 ${PER_LEVEL}마리 무찌를 때마다 레벨이 올라요. 레벨이 오르면 몬스터가 조금씩 세지고 빨라져요.</p>
+      <div class="def-row"><b>문제</b><span class="def-choices" data-choice="topic"></span></div>
+      <div class="def-row"><b>빠르기</b><span class="def-choices" data-choice="pace"></span></div>
       <div class="def-row"><b>시작 레벨</b><span class="def-choices" data-choice="startLevel"></span></div>
       <div class="def-legend" id="def-legend"></div>
       <p class="def-best" id="def-best"></p>
@@ -123,10 +126,20 @@ export function createDefense(root, io) {
   const $ = (s) => root.querySelector(s);
   let data = io.load();
   const saved = Number(data.defenseSettings?.startLevel);
-  const settings = { startLevel: saved >= 1 && saved <= START_LEVELS ? saved : 1 };
+  const savedTopic = data.defenseSettings?.topic;
+  const savedPace = data.defenseSettings?.pace;
+  const settings = {
+    startLevel: saved >= 1 && saved <= START_LEVELS ? saved : 1,
+    topic: savedTopic in TOPICS ? savedTopic : 'mix',
+    pace: savedPace in PACES ? savedPace : 'normal',
+  };
+  /** 섬 id → 섬 이름(문제 종류 안내에 쓴다) */
+  const ISLAND_TITLE = Object.fromEntries(curriculum.worlds.flatMap((w) => w.islands.map((i) => [i.id, i.title])));
 
   // ---- 설정 ----
   const CHOICES = {
+    topic: Object.entries(TOPICS),
+    pace: Object.entries(PACES).map(([k, v]) => [k, v.label]),
     startLevel: Array.from({ length: START_LEVELS }, (_, i) => [i + 1, `Lv.${i + 1}`]),
   };
   function renderSetup() {
@@ -139,14 +152,14 @@ export function createDefense(root, io) {
         b.textContent = label;
         b.onclick = () => {
           sfx('tap');
-          settings[key] = Number(value);
+          settings[key] = typeof value === 'number' ? value : String(value);
           renderSetup();
         };
         box.appendChild(b);
       }
     }
     const lv = settings.startLevel;
-    $('#def-legend').innerHTML = `<b>Lv.${lv}</b> · ${STAGES[stageOf(lv) - 1]} · 몬스터가 성까지 ${levelInfo(lv).travel}초<br>나오는 몬스터: ${typesAt(lv).map((t) => `<span class="mon-mini">${monHTML(t)}</span> ${ENEMIES[t].name}(${ENEMIES[t].points}점)`).join(' · ')}`;
+    $('#def-legend').innerHTML = `<b>Lv.${lv}</b> · ${STAGES[stageOf(lv) - 1]} · 몬스터가 성까지 ${travelFor(lv, settings.pace)}초<br>나오는 문제: ${[...new Set(problemMix(settings.topic, lv).map((b) => ISLAND_TITLE[BANDS[b.topic][b.band].island]))].join(' · ')}<br>나오는 몬스터: ${typesAt(lv).map((t) => `<span class="mon-mini">${monHTML(t)}</span> ${ENEMIES[t].name}(${ENEMIES[t].points}점)`).join(' · ')}`;
     const best = data.defense ?? {};
     const seen = data.storySeen ?? [];
     $('#def-story').innerHTML = `<b>📖 이야기 다시 보기</b> ${replayable(seen).map((id) => `<button class="block-btn small" data-d="story" data-id="${id}">${story.scenes[id].title}</button>`).join('')}`;
@@ -200,13 +213,14 @@ export function createDefense(root, io) {
   });
 
   function problemHTML(p) {
-    if (p.kind === 'mul') return `<div class="q-mul">${fmt(p.a)} × ${fmt(p.b)}</div>`;
+    if (p.kind === 'mul' || p.kind === 'mul2' || p.kind === 'tt') return `<div class="q-mul">${fmt(p.a)} × ${fmt(p.b)}</div>`;
+    if (p.kind === 'div') return `<div class="q-mul">${fmt(p.a)} ÷ ${fmt(p.b)}</div>`;
     return `<div class="q-rows">${p.rows.map((r, i) => `<span>${i === 0 ? '' : r < 0 ? '−' : '+'}</span><span>${fmt(Math.abs(r))}</span>`).join('')}</div>`;
   }
 
   function start() {
     data = io.load();
-    data.defenseSettings = { startLevel: settings.startLevel };
+    data.defenseSettings = { startLevel: settings.startLevel, topic: settings.topic, pace: settings.pace };
     io.save(data);
     game = {
       seed: crypto.getRandomValues(new Uint32Array(1))[0],
@@ -263,9 +277,9 @@ export function createDefense(root, io) {
     // 몬스터는 끝없이 나온다. 나올 때의 레벨로 종류와 빠르기가 정해진다
     while (game.t >= game.nextSpawn) {
       const taken = game.enemies.filter((e) => !game.gone.has(e.id)).map((e) => e.answer);
-      const e = makeEnemy(game.seed, game.enemies.length, game.level, game.nextSpawn, taken);
+      const e = makeEnemy(game.seed, game.enemies.length, game.level, game.nextSpawn, taken, { topic: settings.topic, pace: settings.pace });
       game.enemies.push(e);
-      game.nextSpawn += spawnGap(game.level);
+      game.nextSpawn += spawnGap(game.level, settings.pace);
       const el = document.createElement('div');
       el.className = `enemy ${e.type}`;
       el.innerHTML = `<div class="bubble">${problemHTML(e.problem)}</div>${monHTML(e.type)}`;
@@ -640,9 +654,9 @@ export function createDefense(root, io) {
         date: new Date().toISOString().slice(0, 10),
         finished: !quit,
         seconds: Math.round(game.t),
-        results: game.defeated.map((e) => ({ lesson: ENEMIES[e.type].island, key: e.problem.key, features: e.problem.features, a: e.problem.a, firstTry: true, correct: true, timed: true, enemy: e.type })),
+        results: game.defeated.map((e) => ({ lesson: e.problem.island, key: e.problem.key, features: e.problem.features, a: e.problem.a, firstTry: true, correct: true, timed: true, enemy: e.type })),
         bonus: null,
-        defense: { startLevel: settings.startLevel, level: game.level, score: game.score, defeated: game.defeated.length },
+        defense: { startLevel: settings.startLevel, topic: settings.topic, pace: settings.pace, level: game.level, score: game.score, defeated: game.defeated.length },
       });
     }
     io.save(data);

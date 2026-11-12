@@ -1,25 +1,69 @@
 // 게임 모드 "주판 성 지키기": 레벨이 오를수록 몬스터가 서서히 바뀌고 빨라진다
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ENEMIES, LEVELS, levelAfter, levelInfo, makeEnemy, matchAnswer, MIN_GAP, MIN_TRAVEL, PER_LEVEL, positionAt, reached, scoreFor, spawnGap, stageOf, STAGES, typesAt } from '../src/core/defense.js';
+import { BANDS, ENEMIES, LEVELS, levelAfter, levelInfo, makeEnemy, matchAnswer, MIN_GAP, MIN_TRAVEL, MIX_DIV_FROM, PACES, PER_LEVEL, positionAt, problemMix, reached, scoreFor, spawnGap, stageOf, STAGES, TOPICS, travelFor, typesAt } from '../src/core/defense.js';
 import { SKILLS } from '../src/core/skills.js';
 
 const ORDER = Object.keys(ENEMIES);
 
-test('몬스터는 17종이고, 뒤로 갈수록 점수가 크며, 모두 문제를 만들 수 있다', () => {
+test('몬스터는 17종이고 뒤로 갈수록 점수가 크다. 문제 단계는 모두 기술 지도의 섬에 들어가고 문제를 만든다', () => {
   assert.equal(ORDER.length, 17);
   for (let i = 1; i < ORDER.length; i++) assert.ok(ENEMIES[ORDER[i]].points > ENEMIES[ORDER[i - 1]].points, ORDER[i]);
   const islands = new Set(SKILLS.map((s) => s.island));
-  for (const [type, e] of Object.entries(ENEMIES)) {
-    assert.ok(islands.has(e.island), `${type}의 섬`);
-    for (let seed = 0; seed < 20; seed++) {
-      const p = e.make(seed);
-      assert.ok(Number.isInteger(p.answer) && p.answer >= 0, `${type} ${seed}`);
+  for (const [topic, list] of Object.entries(BANDS)) {
+    list.forEach((b, i) => {
+      assert.ok(islands.has(b.island), `${topic} ${i}의 섬 ${b.island}`);
+      for (let seed = 0; seed < 15; seed++) {
+        const p = b.make(seed);
+        assert.ok(Number.isInteger(p.answer) && p.answer >= 0, `${topic} ${i} ${seed}`);
+      }
+    });
+  }
+  assert.equal(BANDS.addsub[0].make(1).rows.length, 3);
+  assert.equal(BANDS.mul[0].make(1).kind, 'tt');
+  assert.equal(BANDS.div[0].make(1).kind, 'div');
+});
+
+test('문제 종류: 고른 종류만 나오고, 섞어서는 덧뺄셈이 절반을 넘지 않으며 나눗셈은 레벨 5부터', () => {
+  assert.deepEqual(Object.keys(TOPICS), ['mix', 'addsub', 'mul', 'div']);
+  for (const topic of ['addsub', 'mul', 'div']) {
+    for (let lv = 1; lv <= LEVELS.length + 3; lv++) {
+      for (const b of problemMix(topic, lv)) assert.equal(b.topic, topic);
+      const e = makeEnemy(5, lv, lv, 0, [], { topic });
+      assert.ok(BANDS[topic].some((b) => b.island === e.problem.island), `${topic} Lv.${lv}`);
     }
   }
-  assert.equal(ENEMIES.slime.make(1).rows.length, 3);
-  assert.equal(ENEMIES.knight.make(1).rows.length, 5);
-  assert.equal(ENEMIES.dragon.make(1).kind, 'mul');
+  for (let lv = 1; lv <= LEVELS.length; lv++) {
+    const mix = problemMix('mix', lv);
+    const total = mix.reduce((s, b) => s + b.weight, 0);
+    const add = mix.filter((b) => b.topic === 'addsub').reduce((s, b) => s + b.weight, 0);
+    assert.ok(add / total <= 0.5, `Lv.${lv} 덧뺄셈 비율`);
+    assert.equal(mix.some((b) => b.topic === 'div'), lv >= MIX_DIV_FROM, `Lv.${lv} 나눗셈`);
+  }
+  // 단계는 레벨이 오를수록 같거나 어려워진다
+  for (const topic of ['addsub', 'mul', 'div']) {
+    let prev = 0;
+    for (let lv = 1; lv <= LEVELS.length; lv++) {
+      const top = Math.max(...problemMix(topic, lv).map((b) => b.band));
+      assert.ok(top >= prev, `${topic} Lv.${lv}`);
+      prev = top;
+    }
+    assert.equal(prev, BANDS[topic].length - 1, `${topic}은 마지막 레벨에 가장 어려운 단계`);
+  }
+  // 섞어서 Lv.1은 곱셈구구부터
+  assert.ok(problemMix('mix', 1).some((b) => b.topic === 'mul' && BANDS.mul[b.band].island === 'mul-0'));
+});
+
+test('기본 빠르기: 아이가 고른 대로 성까지 오는 시간이 바뀌고, 레벨이 오르면 여전히 빨라진다', () => {
+  assert.deepEqual(Object.keys(PACES), ['slow', 'normal', 'fast']);
+  for (let lv = 1; lv <= LEVELS.length; lv++) {
+    assert.equal(travelFor(lv), levelInfo(lv).travel);
+    assert.ok(travelFor(lv, 'slow') > travelFor(lv) && travelFor(lv) > travelFor(lv, 'fast'));
+    if (lv > 1) for (const pace of Object.keys(PACES)) assert.ok(travelFor(lv, pace) <= travelFor(lv - 1, pace));
+    assert.equal(makeEnemy(1, 0, lv, 0, [], { pace: 'slow' }).travel, travelFor(lv, 'slow'));
+  }
+  assert.ok(spawnGap(1, 'slow') > spawnGap(1) && spawnGap(1) > spawnGap(1, 'fast'));
+  assert.equal(spawnGap(100, 'fast'), MIN_GAP);
 });
 
 test('레벨이 오르면 몬스터가 서서히 바뀌고(하나 빠지고 하나 들어옴), 빨라진다', () => {

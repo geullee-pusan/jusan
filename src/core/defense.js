@@ -6,34 +6,128 @@
 // 레벨이 오를수록 몬스터가 조금씩 세지고 빨라진다(부모 결정, 2026-11-10). 레벨은 내려가지 않는다.
 // 시간은 UI가 재서 넘긴다(여기서는 현재 시각을 읽지 않는다).
 import { makeAddSubProblem } from './addsub.js';
+import { makeDivProblem } from './divide.js';
+import { makeLongProblem } from './mul2.js';
 import { makeMulProblem } from './mulproblems.js';
 import { createRng, randInt, seedFrom } from './rng.js';
 
 /**
- * 몬스터 17종. 지도의 섬 차례(바로 넣기 → 친구수 → 5의 짝 → 함께 → 이어서 올리기 → 두 자리 → 곱셈)대로
- * 뒤로 갈수록 문제가 어렵고 점수가 크다. island: 무찌른 문제를 기술 지도에 넣을 때 쓰는 섬.
+ * 몬스터 17종. 뒤로 갈수록 세고 점수가 크다. 몬스터는 어려움 단계만 나타내고,
+ * 문제는 아이가 고른 문제 종류(TOPICS)와 레벨로 따로 정한다(2026-11-12 부모 결정: 덧뺄셈에 치우치지 않게).
+ */
+export const ENEMIES = {
+  slime: { name: '슬라임', points: 10 },
+  bat: { name: '박쥐', points: 12 },
+  mushroom: { name: '버섯', points: 15 },
+  spider: { name: '거미', points: 20 },
+  raven: { name: '큰까마귀', points: 22 },
+  zombie: { name: '좀비', points: 25 },
+  skeleton: { name: '해골', points: 30 },
+  ghost: { name: '유령', points: 35 },
+  goblin: { name: '고블린', points: 40 },
+  golem: { name: '바위 골렘', points: 45 },
+  knight: { name: '검은 기사', points: 50 },
+  witch: { name: '마녀', points: 55 },
+  dragon: { name: '드래곤', points: 60 },
+  giant: { name: '거인', points: 70 },
+  gargoyle: { name: '가고일', points: 75 },
+  lava: { name: '용암 골렘', points: 80 },
+  boss: { name: '마왕', points: 100 },
+};
+
+/**
+ * 문제 단계. 종류마다 지도의 섬 차례대로 쉬운 것부터 어려운 것까지 늘어놓았다.
+ * island: 무찌른 문제를 기술 지도에 넣을 섬. make(seed): 문제 하나.
  */
 const D1 = ['A1', 'A2', 'B1', 'B2'];
-const as = (rows, digits, minus, need, allowed) => (s) => makeAddSubProblem(s, { rows, digits, minus, need, allowed });
-export const ENEMIES = {
-  slime: { name: '슬라임', points: 10, island: 'add-1', make: as(3, [1, 1], 1, [], D1) },
-  bat: { name: '박쥐', points: 12, island: 'add-1', make: as(4, [1, 1], 1, [], D1) },
-  mushroom: { name: '버섯', points: 15, island: 'add-2', make: as(3, [1, 1], 0, ['A4'], [...D1, 'A4']) },
-  spider: { name: '거미', points: 20, island: 'add-3', make: as(3, [1, 1], 1, ['B4'], [...D1, 'A4', 'B4']) },
-  raven: { name: '큰까마귀', points: 22, island: 'add-3', make: as(4, [1, 1], 1, ['B4'], [...D1, 'A4', 'B4']) },
-  zombie: { name: '좀비', points: 25, island: 'add-4', make: as(3, [1, 1], 1, ['A3', 'B3'], [...D1, 'A3', 'A4', 'B3', 'B4']) },
-  skeleton: { name: '해골', points: 30, island: 'add-4', make: as(4, [1, 1], 1, ['A3', 'B3'], [...D1, 'A3', 'A4', 'B3', 'B4']) },
-  ghost: { name: '유령', points: 35, island: 'add-5', make: as(4, [1, 1], 1, ['A5', 'B5'], [...D1, 'A3', 'A4', 'A5', 'B3', 'B4', 'B5']) },
-  goblin: { name: '고블린', points: 40, island: 'add-5', make: as(4, [1, 2], 1, ['A6', 'B6'], null) },
-  golem: { name: '바위 골렘', points: 45, island: 'add-1', make: as(3, [2, 2], 1, [], null) },
-  knight: { name: '검은 기사', points: 50, island: 'add-6', make: as(5, [2, 2], 2, [], null) },
-  witch: { name: '마녀', points: 55, island: 'mul-1digit', make: (s) => makeMulProblem(s, { multiDigits: 2, singleFirst: createRng(s)() < 0.5, need: { carry: false } }) },
-  dragon: { name: '드래곤', points: 60, island: 'mul-1digit', make: (s) => makeMulProblem(s, { multiDigits: 2, singleFirst: createRng(s)() < 0.5 }) },
-  giant: { name: '거인', points: 70, island: 'add-6', make: as(5, [2, 3], 2, [], null) },
-  gargoyle: { name: '가고일', points: 75, island: 'mul-1digit', make: (s) => makeMulProblem(s, { multiDigits: 2, singleFirst: createRng(s)() < 0.5, need: { carry: true } }) },
-  lava: { name: '용암 골렘', points: 80, island: 'mul-1digit', make: (s) => makeMulProblem(s, { multiDigits: 3, singleFirst: createRng(s)() < 0.5 }) },
-  boss: { name: '마왕', points: 100, island: 'add-6', make: as(5, [2, 3], 2, ['A5', 'A6', 'B5', 'B6'], null) },
+const as = (island, rows, digits, minus, need, allowed) => ({ island, make: (s) => makeAddSubProblem(s, { rows, digits, minus, need, allowed }) });
+const tt = (lo, hi) => ({
+  island: 'mul-0',
+  make: (s) => {
+    const r = createRng(s);
+    const a = randInt(r, lo, hi);
+    const b = randInt(r, 2, 9);
+    return { kind: 'tt', key: `${a}x${b}`, a, b, answer: a * b, features: { a } };
+  },
+});
+const m1 = (multiDigits, need) => ({ island: 'mul-1digit', make: (s) => makeMulProblem(s, { multiDigits, singleFirst: createRng(s)() < 0.5, need }) });
+const m2 = (da, db, need) => ({ island: da + db > 4 ? 'mul-big' : 'mul-2x2', make: (s) => makeLongProblem(s, { da, db, need }) });
+const dv = (island, spec) => ({ island, make: (s) => makeDivProblem(s, spec) });
+
+export const BANDS = {
+  addsub: [
+    as('add-1', 3, [1, 1], 1, [], D1),
+    as('add-1', 4, [1, 1], 1, [], D1),
+    as('add-2', 3, [1, 1], 0, ['A4'], [...D1, 'A4']),
+    as('add-3', 3, [1, 1], 1, ['B4'], [...D1, 'A4', 'B4']),
+    as('add-3', 4, [1, 1], 1, ['B4'], [...D1, 'A4', 'B4']),
+    as('add-4', 3, [1, 1], 1, ['A3', 'B3'], [...D1, 'A3', 'A4', 'B3', 'B4']),
+    as('add-4', 4, [1, 1], 1, ['A3', 'B3'], [...D1, 'A3', 'A4', 'B3', 'B4']),
+    as('add-5', 4, [1, 1], 1, ['A5', 'B5'], [...D1, 'A3', 'A4', 'A5', 'B3', 'B4', 'B5']),
+    as('add-5', 4, [1, 2], 1, ['A6', 'B6'], null),
+    as('add-1', 3, [2, 2], 1, [], null),
+    as('add-6', 5, [2, 2], 2, [], null),
+    as('add-6', 5, [2, 3], 2, [], null),
+    as('add-6', 5, [2, 3], 2, ['A5', 'A6', 'B5', 'B6'], null),
+  ],
+  mul: [
+    tt(2, 5),
+    tt(2, 9),
+    tt(6, 9),
+    m1(2, { carry: false }),
+    m1(2, {}),
+    m1(2, { carry: true }),
+    m1(3, {}),
+    m2(2, 2, { carry: false }),
+    m2(2, 2, {}),
+    m2(3, 2, {}),
+  ],
+  div: [
+    dv('div-1', { type: 'rule1' }),
+    dv('div-1', { type: 'rule2' }),
+    dv('div-1', { type: 'mix' }),
+    dv('div-1', { type: 'zero' }),
+    dv('div-2', { digits: 3, zero: false }),
+    dv('div-2', { digits: 3 }),
+    dv('div-2', { digits: 4 }),
+    dv('div-3', { digits: 2, divisorDigits: 2, revise: false }),
+    dv('div-3', { digits: 3, divisorDigits: 2, qDigits: 1 }),
+  ],
 };
+
+/** 아이가 고르는 문제 종류. mix는 레벨에 따라 섞는다 */
+export const TOPICS = {
+  mix: '섞어서',
+  addsub: '덧셈·뺄셈',
+  mul: '곱셈',
+  div: '나눗셈',
+};
+
+/** 섞어서: 나눗셈이 들어오는 레벨. 그 전에는 덧뺄셈과 곱셈(구구부터)만 반씩 나온다 */
+export const MIX_DIV_FROM = 5;
+
+/** 문제 종류의 단계 수를 레벨 from~마지막 레벨에 고르게 펼친다. 마지막 레벨을 넘으면 마지막 단계 */
+function bandIndex(count, level, from = 1) {
+  const span = LEVELS.length - from;
+  const x = Math.min(1, Math.max(0, (level - from) / (span || 1)));
+  return Math.round(x * (count - 1));
+}
+
+/**
+ * 레벨에 나오는 문제 단계와 무게. 지금 단계 2, 바로 앞 단계 1(서서히 바뀐다).
+ * @returns {{topic: string, band: number, weight: number}[]}
+ */
+export function problemMix(topic, level) {
+  const lv = Math.max(1, Math.floor(level));
+  const topics = topic === 'mix' ? (lv >= MIX_DIV_FROM ? ['addsub', 'mul', 'div'] : ['addsub', 'mul']) : [topic in BANDS ? topic : 'addsub'];
+  const out = [];
+  for (const t of topics) {
+    const i = bandIndex(BANDS[t].length, lv, t === 'div' && topic === 'mix' ? MIX_DIV_FROM : 1);
+    out.push({ topic: t, band: i, weight: 2 });
+    if (i > 0) out.push({ topic: t, band: i - 1, weight: 1 });
+  }
+  return out;
+}
 
 /**
  * 레벨표. mix: 나오는 몬스터와 비율(무게), travel: 성까지 오는 시간(초).
@@ -84,9 +178,25 @@ export function levelAfter(startLevel, defeated) {
 /** 몬스터가 나오는 가장 짧은 간격(초) */
 export const MIN_GAP = 3;
 
+/**
+ * 기본 빠르기: 아이가 고른다(2026-11-12 부모 요청). 성까지 오는 시간에 곱한다.
+ * 레벨이 오르며 빨라지는 것은 그대로이고, 출발점만 바뀐다.
+ */
+export const PACES = {
+  slow: { label: '느리게', k: 1.4 },
+  normal: { label: '보통', k: 1 },
+  fast: { label: '빠르게', k: 0.75 },
+};
+const paceK = (pace) => PACES[pace]?.k ?? 1;
+
+/** 성까지 오는 시간(초): 레벨의 시간 × 기본 빠르기 */
+export function travelFor(level, pace = 'normal') {
+  return Math.round(levelInfo(level).travel * paceK(pace));
+}
+
 /** 다음 몬스터가 나오기까지(초): 성까지 오는 시간의 6분의 1, 3초보다 짧지 않게(2026-11-10: 4분의 1에서 줄임) */
-export function spawnGap(level) {
-  return Math.max(MIN_GAP, levelInfo(level).travel / 6);
+export function spawnGap(level, pace = 'normal') {
+  return Math.max(MIN_GAP, travelFor(level, pace) / 6);
 }
 
 /** 레벨에 나오는 몬스터 종류(약한 것부터) */
@@ -101,10 +211,13 @@ export function typesAt(level) {
  * @param {number} level 지금 레벨
  * @param {number} spawnAt 나오는 때(판이 시작하고 흐른 초)
  * @param {Iterable<number>} taken 화면에 있는 몬스터들의 답
+ * @param {{topic?: keyof TOPICS, pace?: keyof PACES}} options 문제 종류와 기본 빠르기(아이가 고른 것)
  * @returns {{id: number, type: string, problem: object, answer: number, spawnAt: number, travel: number, lane: number, level: number}}
+ *   problem.island: 기술 지도에 넣을 섬
  */
-export function makeEnemy(seed, index, level, spawnAt, taken = []) {
-  const { mix, travel } = levelInfo(level);
+export function makeEnemy(seed, index, level, spawnAt, taken = [], { topic = 'mix', pace = 'normal' } = {}) {
+  const { mix } = levelInfo(level);
+  const travel = travelFor(level, pace);
   const rng = createRng(seedFrom('enemy-type', seed, index));
   const entries = Object.entries(mix);
   let pick = rng() * entries.reduce((sum, [, w]) => sum + w, 0);
@@ -115,10 +228,21 @@ export function makeEnemy(seed, index, level, spawnAt, taken = []) {
       break;
     }
   }
+  // 문제 단계: 레벨의 무게대로 고른다
+  const bands = problemMix(topic, level);
+  let pb = rng() * bands.reduce((sum, b) => sum + b.weight, 0);
+  let band = bands[0];
+  for (const b of bands) {
+    if ((pb -= b.weight) < 0) {
+      band = b;
+      break;
+    }
+  }
+  const maker = BANDS[band.topic][band.band];
   const used = new Set(taken);
   let problem;
   for (let t = 0; t < 50; t++) {
-    problem = ENEMIES[type].make(seedFrom('enemy', seed, index, t));
+    problem = { ...maker.make(seedFrom('enemy', seed, index, t)), island: maker.island };
     if (!used.has(problem.answer)) break;
   }
   return { id: index, type, problem, answer: problem.answer, spawnAt, travel, lane: index % 3, level };
