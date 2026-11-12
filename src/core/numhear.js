@@ -1,5 +1,6 @@
 // 말로 들은 답을 숫자로 바꾼다(docs/SPEC.md 7.3절). 순수 함수다.
 // "삼백이십오", "325", "삼백 이십 오", "삼천 이십사", "3,024", "답은 팔백팔십사요"를 모두 숫자로 바꾼다.
+// 소수도 읽는다(자리점 성 "소수" 섬): "3.5", "삼 점 오", "십이 점 사칠", "영 점 영육", "점 오"(= 0.5).
 
 const SINO = { 영: 0, 공: 0, 일: 1, 이: 2, 삼: 3, 사: 4, 오: 5, 육: 6, 륙: 6, 칠: 7, 팔: 8, 구: 9 };
 const SMALL = { 십: 10, 백: 100, 천: 1000 };
@@ -65,14 +66,36 @@ function parseNative(s) {
   return s in NATIVE_ONES ? NATIVE_ONES[s] : null;
 }
 
+/** 소수점 뒤: 숫자를 하나씩("사칠" → "47", "47" → "47") */
+function parseFraction(f) {
+  if (/^[0-9]+$/.test(f)) return f;
+  let out = '';
+  for (const ch of f) {
+    if (!(ch in SINO)) return null;
+    out += SINO[ch];
+  }
+  return out || null;
+}
+
 /**
  * 들은 글자를 숫자로. 못 알아들으면 null.
  * @param {string} text
  */
 export function parseSpokenNumber(text) {
   if (typeof text !== 'string') return null;
+  // 숫자 사이의 점은 소수점이다("3.5"). 끝에 붙은 마침표("884.")는 소수점이 아니다
+  const dot = text.replace(/[\s,]/g, '').match(/(\d+)\.(\d+)/);
+  if (dot) return Number(`${dot[1]}.${dot[2]}`);
   const s = strip(text);
   if (!s) return null;
+  const parts = s.split(/점|쩜/);
+  if (parts.length === 2) {
+    const head = parts[0] === '' ? 0 : parseSpokenNumber(parts[0]);
+    const tail = parseFraction(parts[1]);
+    if (head === null || !Number.isInteger(head) || tail === null) return null;
+    return Number(`${head}.${tail}`);
+  }
+  if (parts.length > 2) return null;
   if (/^[0-9]+$/.test(s)) return Number(s);
   return parseSino(s) ?? parseNative(s);
 }

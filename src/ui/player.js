@@ -69,7 +69,7 @@ export function createPlayer(ctx) {
           board.list(scene.items);
           break;
         case 'board-rows':
-          board.rows(scene.rows, { hideFirst: scene.hideFirst });
+          board.rows(scene.rows, { hideFirst: scene.hideFirst, decimals: scene.decimals ?? 0 });
           break;
         case 'board-listen':
           board.listen(scene.count);

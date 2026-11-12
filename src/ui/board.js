@@ -30,7 +30,7 @@ export function createBoard(root) {
      * 여러 줄 덧셈·뺄셈 문제를 학원 문제지처럼 세로로 줄 맞춰 쓴다. 빼기 줄은 "−" 기호를 붙인다.
      * hideFirst: 첫 줄은 주판 그림으로 보여 주므로 칠판에는 "주판 그림"이라고만 쓴다(머릿속 주판).
      */
-    rows(rows, { hideFirst = false } = {}) {
+    rows(rows, { hideFirst = false, decimals = 0 } = {}) {
       this.clear();
       const grid = document.createElement('div');
       grid.className = 'board-rows';
@@ -41,6 +41,16 @@ export function createBoard(root) {
         const num = document.createElement('span');
         num.className = 'board-num';
         num.textContent = i === 0 && hideFirst ? '🧮' : fmt(Math.abs(r));
+        // 소수는 소수점끼리 줄을 맞춘다: 모자란 소수 자리만큼 보이지 않는 0을 뒤에 붙인다
+        if (decimals > 0 && !(i === 0 && hideFirst)) {
+          const dp = String(Math.abs(r)).split('.')[1]?.length ?? 0;
+          if (dp < decimals) {
+            const pad = document.createElement('span');
+            pad.style.visibility = 'hidden';
+            pad.textContent = (dp === 0 ? '.' : '') + '0'.repeat(decimals - dp);
+            num.appendChild(pad);
+          }
+        }
         grid.append(sign, num);
       });
       const line = document.createElement('div');

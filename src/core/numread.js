@@ -34,6 +34,7 @@ function groupsOf(n) {
  * @param {number} n -9999조 ~ 9999조 사이의 정수
  */
 export function readNumber(n) {
+  if (Number.isFinite(n) && !Number.isInteger(n)) return readDecimal(n);
   if (!Number.isInteger(n)) throw new Error(`정수만 읽어요: ${n}`);
   if (n < 0) return `마이너스 ${readNumber(-n)}`;
   if (n === 0) return DIGITS[0];
@@ -47,6 +48,19 @@ export function readNumber(n) {
     words.push(head + BIG_UNITS[i]);
   }
   return words.join(' ');
+}
+
+/**
+ * 소수를 읽는다: 정수 부분을 읽고 "점" 뒤 숫자를 하나씩 읽는다. 3.5 → "삼 점 오", 0.06 → "영 점 영육", 12.47 → "십이 점 사칠".
+ * 계산에서 생기는 꼬리(0.1 + 0.2 = 0.30000000000000004)를 없애려고 소수 여섯째 자리에서 끊는다.
+ */
+export function readDecimal(n) {
+  if (!Number.isFinite(n)) throw new Error(`읽을 수 없는 수예요: ${n}`);
+  if (n < 0) return `마이너스 ${readDecimal(-n)}`;
+  const [intPart, frac = ''] = String(Number(n.toFixed(6))).split('.');
+  const head = readNumber(Number(intPart));
+  if (!frac) return head;
+  return `${head} 점 ${[...frac].map((d) => DIGITS[Number(d)]).join('')}`;
 }
 
 /**

@@ -363,7 +363,7 @@ function askFlashSpeed() {
  * @returns {Promise<{type: 'number', value: number} | {type: 'demo'} | {type: 'lecture'} | {type: 'stop'}>}
  */
 let answering = null;
-function getAnswer({ allowDemo = true } = {}) {
+function getAnswer({ allowDemo = true, decimal = false } = {}) {
   const box = $('#answer');
   const display = $('#answer-show');
   const heard = $('#heard');
@@ -371,7 +371,12 @@ function getAnswer({ allowDemo = true } = {}) {
   box.hidden = false;
   show('demo', allowDemo);
   let typed = '';
-  const showTyped = () => (display.textContent = typed ? Number(typed).toLocaleString('ko-KR') : ' ');
+  // 소수 섬에서는 점(.)도 넣는다. 치는 동안 "3."처럼 점이 사라지지 않게 정수 부분만 쉼표로 꾸민다
+  const showTyped = () => {
+    if (!typed) return (display.textContent = ' ');
+    const [head, frac] = typed.split('.');
+    display.textContent = Number(head || 0).toLocaleString('ko-KR') + (frac !== undefined ? `.${frac}` : '');
+  };
   showTyped();
   heard.textContent = '';
   teacher.pose('listen');
@@ -390,14 +395,18 @@ function getAnswer({ allowDemo = true } = {}) {
     answering = finish;
     const keys = $('#keys');
     keys.innerHTML = '';
-    for (const label of ['1', '2', '3', '4', '5', '⌫', '6', '7', '8', '9', '0', '확인']) {
+    const labels = decimal ? ['1', '2', '3', '4', '5', '.', '⌫', '6', '7', '8', '9', '0', '확인'] : ['1', '2', '3', '4', '5', '⌫', '6', '7', '8', '9', '0', '확인'];
+    keys.style.gridTemplateColumns = decimal ? 'repeat(7, 1fr)' : '';
+    for (const label of labels) {
       const b = document.createElement('button');
       b.className = label === '확인' ? 'block-btn green' : 'block-btn';
       b.textContent = label;
+      if (decimal && label === '확인') b.style.gridColumn = 'span 2';
       b.onclick = () => {
         sfx('tap');
         if (label === '⌫') typed = typed.slice(0, -1);
-        else if (label === '확인') return typed && finish({ type: 'number', value: Number(typed) });
+        else if (label === '확인') return typed && typed !== '.' && finish({ type: 'number', value: Number(typed) });
+        else if (label === '.') { if (!typed.includes('.') && typed.length < 7) typed = (typed || '0') + '.'; }
         else if (typed.length < 7) typed += label;
         showTyped();
       };
@@ -479,7 +488,7 @@ async function solveOne(script, problem, no, seed, timer, opts) {
   await player.play(ask());
   for (let tries = 1; tries <= 2; tries++) {
     if (player.stopped) return null;
-    const a = await getAnswer({ allowDemo: script.kind !== 'tt' });
+    const a = await getAnswer({ allowDemo: script.kind !== 'tt', decimal: script.kind === 'decimal' });
     if (a.type === 'stop') return stopAll(), null;
     if (a.type === 'lecture') {
       timer.pause();
@@ -499,7 +508,7 @@ async function solveOne(script, problem, no, seed, timer, opts) {
     if (res.correct) return { correct: true, firstTry: tries === 1, miss };
     if (!res.retry) return { correct: false, firstTry: false, miss };
     // 자리점 성은 화면 주판의 수를 다시 읽어야 하니 털지 않는다
-    if (script.kind !== 'tt' && script.kind !== 'place' && script.mode !== 'listen' && script.mode !== 'flash') await player.play([{ kind: 'abacus-clear' }]);
+    if (script.kind !== 'tt' && script.kind !== 'place' && !(script.kind === 'decimal' && problem.type === 'read') && script.mode !== 'listen' && script.mode !== 'flash') await player.play([{ kind: 'abacus-clear' }]);
     if (script.mode === 'listen' || script.mode === 'flash') await player.play(ask()); // 다시 들려주고 다시 보여 준다
   }
   return { correct: false, firstTry: false, miss };

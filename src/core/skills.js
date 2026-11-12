@@ -34,6 +34,8 @@ export const SKILLS = [
   { id: 'dec-read', group: '자리점', name: '자리점부터 세어 큰 수 읽기', island: 'dec-1' },
   { id: 'dec-zero', group: '자리점', name: '가운데 영이 있는 수 읽기', island: 'dec-1' },
   { id: 'dec-place', group: '자리점', name: '자리 이름으로 숫자 찾기', island: 'dec-1' },
+  { id: 'dec-point', group: '자리점', name: '소수 놓고 읽기', island: 'dec-2' },
+  { id: 'dec-align', group: '자리점', name: '소수점 맞춰 더하고 빼기', island: 'dec-2' },
 ];
 
 /** 상태를 정하는 값(SPEC 6.2절 초안). 최근 몇 번을 보고, 몇 번 맞혀야 "됨"인가 */
@@ -55,8 +57,9 @@ const MISS_TO_SKILLS = {
   'no-pad': ['zero-pad', 'big-zero'],
   carry: ['friend-add', 'friend-sub', 'chain'],
   five: ['five-add', 'five-sub', 'both'],
-  shift: ['dec-read'],
-  'zero-drop': ['dec-zero'],
+  shift: ['dec-read', 'dec-point', 'dec-align'],
+  'zero-drop': ['dec-zero', 'dec-point'],
+  align: ['dec-align'],
   neighbor: ['dec-place'],
 };
 
@@ -91,6 +94,8 @@ export function skillsOfResult(lesson, result) {
   } else if (lesson === 'div-1') {
     if (f.rule1) out.add('div-rule1');
     if (f.rule2) out.add('div-rule2');
+  } else if (lesson === 'dec-2') {
+    out.add(f.type === 'read' ? 'dec-point' : 'dec-align');
   } else if (lesson === 'dec-1') {
     // 자리 숫자 문제는 features.place가 있다. 읽기 문제는 없다
     if (f.place !== undefined) out.add('dec-place');

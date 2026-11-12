@@ -6,8 +6,10 @@
 //  mul2   두 자리 × 두 자리 곱셈(mul2.js, 근거 docs/research-curriculum.md 9.1절)
 //  place  자리점 성: 화면 주판에 놓인 큰 수 읽기(placeval.js, 근거 9.2절)
 //  div    나눗셈 바다: 상제법 두 자리 ÷ 한 자리(divide.js, 근거 9.3절)
+//  decimal 자리점 성 "소수": 소수 놓고 읽기, 소수점 맞춰 더하고 빼기(decimal.js, 근거 9.4절)
 // 정답을 맞히면 바로 칭찬하지 않고, 화면 주판으로 계산 과정을 빠르게 한 번 보여 준 뒤 칭찬한다(2026-11-09 부모 요청).
 import { diagnoseAddSub, makeAddSubProblem } from './addsub.js';
+import { addSubDecimalOf, decimalRound, diagnoseDecimal, makeAddSubDecimal, makeReadProblem, readDecimalOf } from './decimal.js';
 import { diagnoseDiv, divProblemOf, divRound, divRoundFrom, makeDivProblem } from './divide.js';
 import { placeName } from './korean.js';
 import { fill, lessonPlan, solveScenes as mulSolveScenes } from './lesson.js';
@@ -52,6 +54,7 @@ export function islandRound(script, seed, rounds = []) {
   // 대본에 문제 차례(problems)가 있으면 그것으로 만든다(큰 곱셈, 큰 수 나누기, 두 자리로 나누기)
   if (script.kind === 'mul2') return script.problems ? longRoundFrom(script.id, script.problems, script.bonusProblem, seed) : longRound(seed);
   if (script.kind === 'place') return placeRound(seed);
+  if (script.kind === 'decimal') return decimalRound(script.id, script.problems, script.bonusProblem, seed);
   if (script.kind === 'div') return script.problems ? divRoundFrom(script.id, script.problems, script.bonusProblem, seed) : divRound(seed);
   const used = new Set();
   const problems = [];
@@ -85,6 +88,27 @@ export function askScenes(script, problem, no, seed, { flashMs = 1000 } = {}) {
       { kind: 'board-clear' },
       say(script, 'q', seed, { no: nth(no) }),
       ask,
+    ];
+  }
+  if (script.kind === 'decimal') {
+    if (problem.type === 'read') {
+      return [
+        { kind: 'abacus-visible', on: true },
+        { kind: 'abacus-clear', quiet: true },
+        { kind: 'abacus-set', value: problem.scaled, at: -problem.dp },
+        { kind: 'abacus-labels', on: false }, // 자리 이름은 숨긴다: 자리점으로 센다
+        { kind: 'board-clear' },
+        say(script, 'q', seed, { no: nth(no) }),
+        say(script, 'q-read', seed),
+      ];
+    }
+    return [
+      { kind: 'abacus-visible', on: true },
+      { kind: 'abacus-labels', on: true },
+      { kind: 'board-rows', rows: problem.rows, decimals: problem.D },
+      { kind: 'abacus-clear' },
+      say(script, 'q', seed, { no: nth(no) }),
+      ...rowLines(script, problem.rows, seed),
     ];
   }
   if (script.kind === 'div') {
@@ -271,8 +295,73 @@ function divSolveScenes(script, problem, seed) {
   return scenes;
 }
 
+/** 자리 이름: 0 이상은 "십의 자리", 음수는 "소수 첫째 자리" */
+const ORD = ['첫째', '둘째', '셋째', '넷째'];
+function placeLabel(place) {
+  return place >= 0 ? `${placeName(place)}의 자리` : `소수 ${ORD[-place - 1]} 자리`;
+}
+
+/** 소수 읽기: 자리점 줄(일의 자리)을 짚고, 그 오른쪽 소수 자리를 하나씩 짚어 읽는다 */
+function decimalReadScenes(script, problem, seed) {
+  const [head, frac] = String(problem.value).split('.');
+  const scenes = [
+    { kind: 'abacus-visible', on: true },
+    { kind: 'abacus-clear', quiet: true },
+    { kind: 'abacus-set', value: problem.scaled, at: -problem.dp },
+    { kind: 'board-clear' },
+    { kind: 'abacus-labels', on: true },
+    { kind: 'abacus-highlight', place: 0 },
+    say(script, 'find-ones', seed, { head: read(Number(head)) }, 'demo'),
+    { kind: 'abacus-highlight', place: -1 },
+    say(script, 'dec-first', seed, { d: read(Number(frac[0])) }, 'demo'),
+  ];
+  if (frac.length > 1) scenes.push({ kind: 'abacus-highlight', place: -2 }, say(script, 'dec-second', seed, { d: read(Number(frac[1])) }, 'demo'));
+  scenes.push(
+    say(script, 'read-point', seed, {}, 'demo'),
+    { kind: 'board-answer', value: problem.answer },
+    say(script, 'answer-is', seed, { answer: read(problem.answer) }),
+    { kind: 'abacus-highlight', place: null },
+  );
+  return scenes;
+}
+
+/** 소수 덧셈·뺄셈: 줄마다 일의 자리를 자리점 줄에 맞춰 놓고 더하고 뺀다 */
+function decimalAddSubScenes(script, problem, seed) {
+  const D = problem.D;
+  const shift = (steps) => steps.map((x) => ({ ...x, place: x.place - D }));
+  const scenes = [
+    { kind: 'abacus-visible', on: true },
+    { kind: 'abacus-labels', on: true },
+    { kind: 'board-rows', rows: problem.rows, decimals: D },
+    { kind: 'abacus-clear' },
+    say(script, 'clear', seed),
+    { kind: 'abacus-highlight', place: 0 },
+    say(script, 'align', seed, {}, 'demo'),
+    { kind: 'abacus-highlight', place: null },
+  ];
+  problem.rows.forEach((row, i) => {
+    scenes.push(say(script, i === 0 ? 'row-first' : row < 0 ? 'row-minus' : 'row-plus', seed + i, { n: read(Math.abs(row)) }, 'demo'));
+    const steps = problem.sim.rowSteps[i];
+    const special = steps.find((x) => !x.carry && !x.borrow && ['A3', 'A4', 'A5', 'B3', 'B4', 'B5'].includes(x.technique));
+    if (special) {
+      const d = special.add ?? special.sub;
+      scenes.push(say(script, `t-${special.technique}`, seed + i, { place: placeLabel(special.place - D), d: read(d), five: read(5 - d), friend: read(special.friend ?? 0) }, 'demo'));
+    }
+    scenes.push({ kind: 'abacus-steps', steps: shift(steps), tensPlace: null, onesPlace: null });
+  });
+  scenes.push(
+    { kind: 'abacus-highlight', place: 0 },
+    say(script, 'read-point', seed, {}, 'demo'),
+    { kind: 'board-answer', value: problem.answer },
+    say(script, 'answer-is', seed, { answer: read(problem.answer) }),
+    { kind: 'abacus-highlight', place: null },
+  );
+  return scenes;
+}
+
 /** 같이 풀기(틀렸을 때, "같이 풀어 줘요"를 눌렀을 때, 강의) */
 export function demoScenes(script, problem, seed) {
+  if (script.kind === 'decimal') return problem.type === 'read' ? decimalReadScenes(script, problem, seed) : decimalAddSubScenes(script, problem, seed);
   if (script.kind === 'div') return divSolveScenes(script, problem, seed);
   if (script.kind === 'mul') return mulSolveScenes(script, problem, seed);
   if (script.kind === 'mul2') return longSolveScenes(script, problem, seed);
@@ -284,6 +373,11 @@ export function demoScenes(script, problem, seed) {
 /** 맞혔을 때: 화면 주판으로 계산 과정을 빠르게 한 번 보여 준다(말 없이) */
 export function replayScenes(script, problem) {
   if (script.kind === 'tt' || script.kind === 'place') return [];
+  if (script.kind === 'decimal') {
+    if (problem.type === 'read') return [];
+    const steps = problem.sim.rowSteps.flat().map((x) => ({ ...x, place: x.place - problem.D }));
+    return [{ kind: 'abacus-visible', on: true }, { kind: 'abacus-clear', quiet: true }, { kind: 'abacus-steps', steps, tensPlace: null, onesPlace: null, fast: FAST_MS }];
+  }
   if (script.kind === 'div') {
     const sol = problem.solution;
     return [
@@ -305,6 +399,7 @@ function diagnose(script, problem, given) {
   if (script.kind === 'mul2') return diagnoseLong(problem.solution, given);
   if (script.kind === 'place') return diagnosePlace(problem, given);
   if (script.kind === 'div') return diagnoseDiv(problem, given);
+  if (script.kind === 'decimal') return diagnoseDecimal(problem, given);
   return diagnoseAddSub(problem, given);
 }
 
@@ -364,6 +459,7 @@ export function lectureParts(script, seed) {
       const p = script.kind === 'mul2' ? (t.a ? longProblemOf(t.a, t.b) : makeLongProblem(s2, t))
         : script.kind === 'place' ? makePlaceProblem(s2, t)
           : script.kind === 'div' ? (t.a ? divProblemOf(t.a, t.b) : makeDivProblem(s2, t))
+            : script.kind === 'decimal' ? (t.value !== undefined ? readDecimalOf(t.value) : t.fixed ? addSubDecimalOf(t.fixed) : t.type === 'read' ? makeReadProblem(s2, t) : makeAddSubDecimal(s2, t))
             : makeAddSubProblem(s2, t);
       parts.push(current);
       const solve = script.kind === 'addsub' ? addSubSolveScenes(script, p, seed + i) : demoScenes(script, p, seed + i);

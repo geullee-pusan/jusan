@@ -32,8 +32,13 @@ test('경계 숫자를 맞게 읽는다', () => {
   for (const [n, want] of cases) assert.equal(readNumber(n), want, `${n}`);
 });
 
-test('정수가 아니면 알려 준다', () => {
-  assert.throws(() => readNumber(1.5));
+test('소수는 점 뒤를 하나씩 읽고(2026-11-12 소수 섬), 수가 아니면 알려 준다', () => {
+  assert.equal(readNumber(1.5), '일 점 오');
+  assert.equal(readNumber(0.06), '영 점 영육');
+  assert.equal(readNumber(12.47), '십이 점 사칠');
+  assert.equal(readNumber(0.1 + 0.2), '영 점 삼');
+  assert.throws(() => readNumber(NaN));
+  assert.throws(() => readNumber(Infinity));
 });
 
 test('숫자 조각을 이어 붙이면 읽은 말과 같다(띄어쓰기 빼고)', () => {

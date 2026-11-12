@@ -23,8 +23,8 @@ test('줄 계산: 3 + 4 - 2 = 5, 5의 짝 덧셈이 나온다', () => {
   assert.ok(sim.techniques.includes('A3'));
 });
 
-test('열린 섬은 17개(소수만 닫힘)', () => {
-  assert.equal(openIds.length, 17);
+test('열린 섬은 18개(모두 열림)', () => {
+  assert.equal(openIds.length, 18);
 });
 
 test('열린 섬마다: 판 문제가 섬 조건을 지키고, 같은 시드면 같고, 강의가 만들어진다', () => {
