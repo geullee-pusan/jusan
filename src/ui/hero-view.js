@@ -8,7 +8,7 @@ import { buildHero, HERO_VIEW, heroCamera } from './hero-model.js';
 
 /** 캔버스 밖으로 몸이 나가 잘리는 동작은 쓰지 않는다(scripts/hero-pack이 재어 data.fits에 적는다) */
 const fits = (name) => data.fits?.[name] !== false && data.clips.some((c) => c.name === name);
-const DANCES = ['dance1', 'dance2', 'dance3', 'dance4', 'dance5'].filter(fits);
+const DANCES = ['dance1', 'dance2', 'dance3', 'dance4', 'dance5', 'dance6'].filter(fits);
 const FADE = 0.25;
 /** 성벽이 깎일 때 번갈아 하는 동작 */
 const HURTS = ['defeated', 'hurt2', 'hurt3'].filter(fits);
