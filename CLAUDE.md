@@ -80,7 +80,7 @@
 
 ## 폴더
 - `docs/`: 기획(`SPEC.md`)과 조사(`research-curriculum.md`)
-- `src/core/`: 섬 엔진(`islands.js`: 섬마다 판·문제 내기·답 듣기·같이 풀기·강의), 덧셈·뺄셈 여러 줄(`addsub.js`), 곱셈구구(`timestable.js`), 1강 판(`practice.js`), 배지·꾸미기·기록(`badges.js`), 주판 모델·덧셈 기법(`abacus.js`), 곱셈 단계(`multiply.js`, 여러 자리 × 여러 자리는 `mul2.js`), 나눗셈 상제법(`divide.js`), 큰 수 읽기(`placeval.js`), 곱셈 문제(`mulproblems.js`), 오답 짐작(`muldiagnose.js`), 수업 장면(`lesson.js`), 숫자 읽기(`numread.js`), 들은 말 → 숫자(`numhear.js`), 조사·자리 이름(`korean.js`), 시드 난수(`rng.js`)
+- `src/core/`: 섬 엔진(`islands.js`: 섬마다 판·문제 내기·답 듣기·같이 풀기·강의), 덧셈·뺄셈 여러 줄(`addsub.js`), 곱셈구구(`timestable.js`), 1강 판(`practice.js`), 배지·꾸미기·기록(`badges.js`), 주판 모델·덧셈 기법(`abacus.js`), 곱셈 단계(`multiply.js`, 여러 자리 × 여러 자리는 `mul2.js`), 나눗셈 상제법(`divide.js`), 큰 수 읽기(`placeval.js`), 소수 읽기·덧셈·뺄셈(`decimal.js`), 곱셈 문제(`mulproblems.js`), 오답 짐작(`muldiagnose.js`), 수업 장면(`lesson.js`), 숫자 읽기(`numread.js`), 들은 말 → 숫자(`numhear.js`), 조사·자리 이름(`korean.js`), 시드 난수(`rng.js`)
 - `src/ui/`: 화면(`main.js`가 지도·풀기 화면), 실물과 같은 주판(`abacus-view.js`), 선생님(`teacher-view.js`, 꾸미기 포함), 목소리(`speech.js`), 듣기(`listen.js`), 효과음(`sfx.js`), 기록 저장(`storage.js`, localStorage는 여기서만)
 - `src/content/`: 지도(`curriculum.json`), 선생님 모습(`teacher-look.json`)과 목소리(`teacher.json`), 섬마다 대본(`lessons/<섬>.json`, 함께 쓰는 대사는 `lessons/common.json`), 끝 소리(`end-sound.m4a`)
 - `media/`: 대사·숫자 조각 음성, 끝 소리, `manifest.json`. 스크립트가 만든다
